@@ -3,9 +3,9 @@
 
 ## Инструменты решения:
 
-- Модуль [xml](https://docs.python.org/3/library/xml.html) для работы с xml-файлами
+- Модуль [xml](https://docs.python.org/3/library/xml.html "XML Processing Modules &#8212; Python 3.11.2 documentation") для работы с xml-файлами
 
-- Модуль [telebot](https://github.com/eternnoir/pyTelegramBotAPI) для создания телеграм-интерфейса
+- Модуль [telebot](https://github.com/eternnoir/pyTelegramBotAPI "GitHub - eternnoir/pyTelegramBotAPI: Python Telegram bot api.") для создания телеграм-интерфейса
 
 ## Макет интерфейса:
 
