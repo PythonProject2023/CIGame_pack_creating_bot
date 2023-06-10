@@ -90,7 +90,7 @@ def pack_create_handler(message: Message):
     print(f"{message.chat.id} in pack create 2")
     bot.set_state(message.from_user.id, MyStates.menu_state, message.chat.id)
     bot.add_data(message.from_user.id, message.chat.id, pack=message.text)
-    bot.send_message(message.chat.id, "Успешно")
+    # bot.send_message(message.chat.id, "Успешно")
     menu_handler(message)
 
 
