@@ -471,7 +471,7 @@ def question_create_handler(message: Message):
 def question_create_callback_handler(call: CallbackQuery):
     print(f"{call.message.chat.id} in r create 1")
     bot.set_state(call.from_user.id, MyStates.question_answer, call.message.chat.id)
-    bot.send_message(call.message.chat.id, "Введите стоимость вопроса:")
+    bot.send_message(call.message.chat.id, "Введите новый ответ:")
 
 
 @bot.message_handler(state=MyStates.question_answer)
