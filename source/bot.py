@@ -156,7 +156,7 @@ def pack_edit_callback_handler(call: CallbackQuery):
     pack_edit_handler(call.message)
 
 
-@bot.message_handler(state=MyStates.pack_edit)
+# @bot.message_handler(state=MyStates.pack_edit)
 def pack_edit_handler(message: Message):
     markup = quick_markup({
         "Создать финальный раунд": {"callback_data": "round_final_create"},
@@ -258,7 +258,7 @@ def round_edit_callback_handler(call: CallbackQuery):
     round_edit_handler(call.message)
 
 
-@bot.message_handler(state=MyStates.round_edit)
+# @bot.message_handler(state=MyStates.round_edit)
 def round_edit_handler(message: Message):
     markup = quick_markup({
         "Создать тему": {"callback_data": "theme_create"},
@@ -343,7 +343,7 @@ def theme_edit_callback_handler(call: CallbackQuery):
     theme_edit_handler(call.message)
 
 
-@bot.message_handler(state=MyStates.theme_edit)
+# @bot.message_handler(state=MyStates.theme_edit)
 def theme_edit_handler(message: Message):
     markup = quick_markup({
         "Создать вопрос": {"callback_data": "question_create"},
@@ -428,7 +428,7 @@ def question_edit_callback_handler(call: CallbackQuery):
     question_edit_handler(call.message)
 
 
-@bot.message_handler(state=MyStates.question_edit)
+# @bot.message_handler(state=MyStates.question_edit)
 def question_edit_handler(message: Message):
     markup = quick_markup({
         "Редактировать стоимость": {"callback_data": "_question_cost"},
