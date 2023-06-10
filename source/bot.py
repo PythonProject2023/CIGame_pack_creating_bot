@@ -362,7 +362,7 @@ def theme_edit_handler(message: Message):
 
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_edit_theme_list", state=MyStates.theme_edit)
 def back_menu_theme_callback_handler(call: CallbackQuery):
-    bot.set_state(call.from_user.id, MyStates.pack_edit, call.message.chat.id)
+    bot.set_state(call.from_user.id, MyStates.round_edit, call.message.chat.id)
     theme_edit_list_callback_handler(call)
 
 
