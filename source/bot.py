@@ -26,7 +26,7 @@ class MyStates(StatesGroup):
     question_edit = State()
     question_cost = State()
     question_answer = State()
-    question_question = State
+    question_question = State()
 
 
 @bot.message_handler(commands=["start"])
