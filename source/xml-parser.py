@@ -26,7 +26,8 @@ def GetFileTree(user_id, pack_name):
 def SaveXMLFile(user_id, pack_name, tree):
     """Save XML file."""
     tree.write(os.path.join(packs_directory, user_id,
-                            pack_name, 'content.xml'))
+                            pack_name, 'content.xml'),
+               encoding='utf-8', xml_declaration=True)
 
 
 def CreateUserDirectory(chat_id, user_id):
