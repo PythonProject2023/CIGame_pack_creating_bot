@@ -17,7 +17,7 @@ def CreateRedisStorage():
 
 def GetFileTree(user_id, pack_name):
     """Parse XML-file tree."""
-    pack_tree = ET.parse(os.path.join(packs_directory, user_id,
+    pack_tree = ET.parse(os.path.join(packs_directory, str(user_id),
                                       pack_name, 'content.xml'))
     root = pack_tree.getroot()
     return [pack_tree, root]
@@ -25,45 +25,44 @@ def GetFileTree(user_id, pack_name):
 
 def SaveXMLFile(user_id, pack_name, tree):
     """Save XML file."""
-    tree.write(os.path.join(packs_directory, user_id,
+    tree.write(os.path.join(packs_directory, str(user_id),
                             pack_name, 'content.xml'),
                encoding='utf-8', xml_declaration=True)
 
 
 def CreateUserDirectory(chat_id, user_id):
     """Create a directory with users packs."""
-    if not os.path.exists(os.path.join(packs_directory, user_id)):
-        os.makedirs(os.path.join(packs_directory, user_id))
+    if not os.path.exists(os.path.join(packs_directory, str(user_id))):
+        os.makedirs(os.path.join(packs_directory, str(user_id)))
 
 
 def CreateNewPack(chat_id, user_id, pack_name):
     """Create new pack directory with sample files."""
-    if not os.path.exists(os.path.join(packs_directory, user_id)):
-        CreateUserDirectory(chat_id, user_id)
-    if os.path.exists(os.path.join(packs_directory, user_id, pack_name)):
+    if not os.path.exists(os.path.join(packs_directory, str(user_id))):
+        CreateUserDirectory(chat_id, user_id))
+    if os.path.exists(os.path.join(packs_directory, str(user_id), pack_name)):
         # если пак с таким именем уже существует, просто ничего не делаем
         # (это надо потом сделать, чтобы пользователю сообщалось об этом)
         return
     shutil.copytree(sample_pack_directory,
-                    os.path.join(packs_directory, user_id, pack_name))
-    tree = ET.parse(os.path.join(packs_directory, user_id,
+                    os.path.join(packs_directory, str(user_id), pack_name))
+    tree = ET.parse(os.path.join(packs_directory, str(user_id),
                                  pack_name, 'content.xml'))
     root = tree.getroot()
     root.set('name', pack_name)
     author = ET.SubElement(root.find('info').find('authors'), 'author')
-    author.text = user_id
-    tree.write(os.path.join(packs_directory, user_id,
-                            pack_name, 'content.xml'))
+    author.text = str(user_id)
+    SaveXMLFile(user_id, pack_name, tree)
 
 
 def DeletePack(chat_id, user_id, pack_name):
     """Delete pack files."""
-    shutil.rmtree(os.path.join(packs_directory, user_id, pack_name))
+    shutil.rmtree(os.path.join(packs_directory, str(user_id), pack_name))
 
 
 def GetUserPacks(chat_id, user_id):
     """Get all the user packs names."""
-    return os.listdir(os.path.join(packs_directory, user_id))
+    return os.listdir(os.path.join(packs_directory, str(user_id)))
 
 
 def CreateNewRound(chat_id, user_id, round_name, final=False):
@@ -300,7 +299,7 @@ def SetQuestionFile(chat_id, user_id, file_abs_path, file_type):
         folder_name = 'Audio'
     else:
         folder_name = 'Video'
-    path_to_files_folder = os.path.join(packs_directory, user_id,
+    path_to_files_folder = os.path.join(packs_directory, str(user_id),
                                         pack_name, folder_name)
     if not os.path.exists(path_to_files_folder):
         os.makedirs(path_to_files_folder)
@@ -331,9 +330,9 @@ def SetQuestionFile(chat_id, user_id, file_abs_path, file_type):
 
 def LoadPackToSiq(chat_id, user_id, pack_name):
     """Load pack to .siq format and return path to it."""
-    path_to_user_dir = os.path.join(packs_directory, user_id)
+    path_to_user_dir = os.path.join(packs_directory, str(user_id))
     path_to_siq = os.path.join(path_to_user_dir, pack_name + '.siq')
-    path_to_dir = os.path.join(packs_directory, user_id, pack_name)
+    path_to_dir = os.path.join(packs_directory, str(user_id), pack_name)
     if os.path.exists(path_to_siq):
         os.remove(path_to_siq)
     arc_name = shutil.make_archive(os.path.join(path_to_user_dir, pack_name),
