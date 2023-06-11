@@ -40,6 +40,10 @@ def CreateNewPack(chat_id, user_id, pack_name):
     """Create new pack directory with sample files."""
     if not os.path.exists(os.path.join(packs_directory, user_id)):
         CreateUserDirectory(chat_id, user_id)
+    if os.path.exists(os.path.join(packs_directory, user_id, pack_name)):
+        # если пак с таким именем уже существует, просто ничего не делаем
+        # (это надо потом сделать, чтобы пользователю сообщалось об этом)
+        return
     shutil.copytree(sample_pack_directory,
                     os.path.join(packs_directory, user_id, pack_name))
     tree = ET.parse(os.path.join(packs_directory, user_id,
@@ -259,3 +263,76 @@ def GetQuestionAnswer(chat_id, user_id):
         f"round[@name='{round_name}']").find(
         'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
         f"question[@uuid='{question_uuid}']").find('right/answer').text
+
+
+def SetQuestionText(chat_id, user_id, question):
+    """Set question in form of text."""
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
+    tree, root = GetFileTree(user_id, pack_name)
+    round_name = rs.get_value(chat_id, user_id, 'round')
+    theme_name = rs.get_value(chat_id, user_id, 'theme')
+    question_uuid = rs.get_value(chat_id, user_id, 'question')
+    scenario = root.find('rounds').find(
+        f"round[@name='{round_name}']").find(
+        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
+        f"question[@uuid='{question_uuid}']").find('scenario')
+    for q in scenario.findall('atom'):
+        scenario.remove(q)
+    question_text = ET.SubElement(scenario, 'atom')
+    question_text.text = question
+    SaveXMLFile(user_id, pack_name, tree)
+
+
+def SetQuestionFile(chat_id, user_id, file_abs_path, file_type):
+    """Set question in form of file."""
+    assert file_type in ['video', 'audio', 'image']
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
+    if file_type == 'image':
+        folder_name = 'Images'
+    elif file_type == 'audio':
+        folder_name = 'Audio'
+    else:
+        folder_name = 'Video'
+    path_to_files_folder = os.path.join(packs_directory, user_id,
+                                        pack_name, folder_name)
+    if not os.path.exists(path_to_files_folder):
+        os.makedirs(path_to_files_folder)
+    file_uuid = str(uuid.uuid4())
+    file_format = file_abs_path.split('.')[-1]
+    shutil.move(file_abs_path, os.path.join(path_to_files_folder,
+                                            file_uuid + '.' + file_format))
+    tree, root = GetFileTree(user_id, pack_name)
+    round_name = rs.get_value(chat_id, user_id, 'round')
+    theme_name = rs.get_value(chat_id, user_id, 'theme')
+    question_uuid = rs.get_value(chat_id, user_id, 'question')
+    scenario = root.find('rounds').find(
+        f"round[@name='{round_name}']").find(
+        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
+        f"question[@uuid='{question_uuid}']").find('scenario')
+    for q in scenario.findall('atom'):
+        scenario.remove(q)
+    question_file = ET.SubElement(scenario, 'atom')
+    if file_type == 'image':
+        question_file.set('type', 'image')
+    elif file_type == 'audio':
+        question_file.set('type', 'voice')
+    else:
+        question_file.set('type', 'video')
+    question_file.text = '@' + file_uuid + '.' + file_format
+    SaveXMLFile(user_id, pack_name, tree)
+
+
+def LoadPackToSiq(chat_id, user_id, pack_name):
+    """Load pack to .siq format and return path to it."""
+    path_to_user_dir = os.path.join(packs_directory, user_id)
+    path_to_siq = os.path.join(path_to_user_dir, pack_name + '.siq')
+    path_to_dir = os.path.join(packs_directory, user_id, pack_name)
+    if os.path.exists(path_to_siq):
+        os.remove(path_to_siq)
+    arc_name = shutil.make_archive(os.path.join(path_to_user_dir, pack_name),
+                                   'zip', path_to_dir)
+    shutil.move(os.path.join(path_to_user_dir, arc_name),
+                path_to_siq)
+    return path_to_siq
