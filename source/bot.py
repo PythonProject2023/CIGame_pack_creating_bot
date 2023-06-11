@@ -47,7 +47,7 @@ def menu_handler(message: Message):
         "Выгрузить пак": {"callback_data": "pack_download"},
         "Удалить пак": {"callback_data": "pack_delete"},
         "Смена языка": {"callback_data": "language"}
-    })
+    }, row_width=1)
     try:
         bot.edit_message_text(chat_id=message.chat.id,
                               message_id=message.message_id, text="Меню", reply_markup=markup)
@@ -438,6 +438,12 @@ def question_create_callback_handler(call: CallbackQuery):
     bot.send_message(call.message.chat.id, "Введите стоимость вопроса:")
 
 
+def question_create_msg_handler(message: Message):
+    print(f"{message.chat.id} in question create 1")
+    bot.set_state(message.from_user.id, MyStates.question_create, message.chat.id)
+    bot.send_message(message.chat.id, "Введите стоимость вопроса:")
+
+
 @bot.message_handler(state=MyStates.question_create)
 def question_create_handler(message: Message):
     print(f"{message.chat.id} in question create 2")
@@ -446,6 +452,7 @@ def question_create_handler(message: Message):
         xml_parser.CreateNewQuestion(message.chat.id, message.from_user.id, price)
     except ValueError:
         bot.send_message(message.chat.id, "Введите число")
+        question_create_msg_handler(message)
     bot.set_state(message.from_user.id, MyStates.theme_edit, message.chat.id)
     theme_edit_msg_handler(message)
 
@@ -454,7 +461,7 @@ def question_create_handler(message: Message):
 def question_delete_callback_handler(call: CallbackQuery):
     dict_of_questions = xml_parser.GetQuestions(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
-    for i, value in enumerate(dict_of_questions):
+    for i, value in enumerate(dict_of_questions, start=1):
         markup.add(InlineKeyboardButton(f"{i}. {value[1]}", callback_data=f"delete_question_{value[0]}"))
     markup.add(InlineKeyboardButton("Назад", callback_data="back_to_theme_edit_menu"))
     bot.edit_message_text(chat_id=call.message.chat.id,
@@ -466,7 +473,7 @@ def question_delete_callback_handler(call: CallbackQuery):
 def question_edit_list_callback_handler(call: CallbackQuery):
     dict_of_questions = xml_parser.GetQuestions(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
-    for i, value in enumerate(dict_of_questions):
+    for i, value in enumerate(dict_of_questions, start=1):
         markup.add(InlineKeyboardButton(f"{i}. {value[1]}", callback_data=f"edit_question_{value[0]}"))
     markup.add(InlineKeyboardButton("Назад", callback_data="back_to_theme_edit_menu"))
     bot.edit_message_text(chat_id=call.message.chat.id,
@@ -511,7 +518,7 @@ def question_edit_handler(call: CallbackQuery):
     if ans is None:
         txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
     else:
-        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\n Ответ: {ans}"
+        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
     try:
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id, text=txt, reply_markup=markup)
@@ -537,7 +544,7 @@ def question_edit_msg_handler(message: Message):
     if ans is None:
         txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
     else:
-        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\n Ответ: {ans}"
+        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
     try:
         bot.edit_message_text(chat_id=message.chat.id,
                               message_id=message.message_id, text=txt, reply_markup=markup)
@@ -554,10 +561,16 @@ def back_menu_question_callback_handler(call: CallbackQuery):
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_cost", state=MyStates.question_edit)
-def question_create_callback_handler(call: CallbackQuery):
+def question_cost_callback_handler(call: CallbackQuery):
     print(f"{call.message.chat.id} in question cost 1")
     bot.set_state(call.from_user.id, MyStates.question_cost, call.message.chat.id)
     bot.send_message(call.message.chat.id, "Введите стоимость вопроса:")
+
+
+def question_cost_msg_handler(message: Message):
+    print(f"{message.chat.id} in question cost 1")
+    bot.set_state(message.from_user.id, MyStates.question_cost, message.chat.id)
+    bot.send_message(message.chat.id, "Введите стоимость вопроса:")
 
 
 @bot.message_handler(state=MyStates.question_cost)
@@ -569,6 +582,7 @@ def question_create_handler(message: Message):
         xml_parser.SetQuestionPrice(message.chat.id, message.from_user.id, price)
     except ValueError:
         bot.send_message(message.chat.id, "Введите число")
+        question_cost_msg_handler(message)
     question_edit_msg_handler(message)
 
 

@@ -39,7 +39,7 @@ def CreateUserDirectory(chat_id, user_id):
 def CreateNewPack(chat_id, user_id, pack_name):
     """Create new pack directory with sample files."""
     if not os.path.exists(os.path.join(packs_directory, str(user_id))):
-        CreateUserDirectory(chat_id, user_id))
+        CreateUserDirectory(chat_id, user_id)
     if os.path.exists(os.path.join(packs_directory, str(user_id), pack_name)):
         # если пак с таким именем уже существует, просто ничего не делаем
         # (это надо потом сделать, чтобы пользователю сообщалось об этом)
