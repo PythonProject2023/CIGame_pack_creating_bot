@@ -4,7 +4,7 @@ from telebot.handler_backends import State, StatesGroup
 from telebot.custom_filters import StateFilter
 from telebot.storage import StateRedisStorage
 from telebot.util import quick_markup
-from uuid import uuid1
+import xml_parser
 import config
 import os
 
@@ -33,13 +33,8 @@ class MyStates(StatesGroup):
 @bot.message_handler(commands=["start"])
 def start_handler(message: Message):
     print(f"{message.chat.id} in start")
-    # if bot.get_state(message.from_user.id, message.chat.id) is None:
     bot.set_state(message.from_user.id, MyStates.menu_state, message.chat.id)
-    # bot.send_message(message.chat.id, "Это только шаблон для нашего бота")
-    if not os.path.exists("../packs"):
-        os.mkdir("../packs")
-    if not os.path.exists(f"../packs/{message.chat.id}"):
-        os.mkdir(f"../packs/{message.chat.id}")
+    xml_parser.CreateUserDirectory(message.chat.id, message.from_user.id)
     menu_handler(message)
 
 
@@ -75,8 +70,6 @@ def language_callback_handler(call: CallbackQuery):
         })
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id, text="Не удалось сменить язык", reply_markup=markup)
-    # bot.send_message(call.message.chat.id, "Не удалось сменить язык")
-    # menu_handler(call.message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "pack_create", state=MyStates.menu_state)
@@ -90,14 +83,13 @@ def pack_create_callback_handler(call: CallbackQuery):
 def pack_create_handler(message: Message):
     print(f"{message.chat.id} in pack create 2")
     bot.set_state(message.from_user.id, MyStates.menu_state, message.chat.id)
-    bot.add_data(message.from_user.id, message.chat.id, pack=message.text)
-    # bot.send_message(message.chat.id, "Успешно")
+    xml_parser.CreateNewPack(message.chat.id, message.from_user.id, message.text)
     menu_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("pack_d"), state=MyStates.menu_state)
 def pack_download_delete_callback_handler(call: CallbackQuery):
-    list_of_packs = ["first", "second", "haha", "anime"]
+    list_of_packs = xml_parser.GetUserPacks(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
     if call.data == "pack_delete":
         for i in list_of_packs:
@@ -117,7 +109,7 @@ def pack_download_delete_callback_handler(call: CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data == "pack_edit", state=MyStates.menu_state)
 def pack_edit_list_callback_handler(call: CallbackQuery):
-    list_of_packs = ["first", "second", "haha", "anime"]
+    list_of_packs = xml_parser.GetUserPacks(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
     for i in list_of_packs:
         markup.add(InlineKeyboardButton(i, callback_data=f"edit_pack_{i}"))
@@ -130,16 +122,15 @@ def pack_edit_list_callback_handler(call: CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data.startswith("download_pack_"), state=MyStates.menu_state)
 def pack_download_callback_handler(call: CallbackQuery):
     name = call.data[14:]
-    print(name)
-    # bot.send_message(call.message.chat.id, "Успешно")
+    path = xml_parser.LoadPackToSiq(call.message.chat.id, call.from_user.id, name)
+    print(path)
     menu_handler(call.message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_pack_"), state=MyStates.menu_state)
 def pack_delete_callback_handler(call: CallbackQuery):
     name = call.data[12:]
-    print(name)
-    # bot.send_message(call.message.chat.id, "Успешно")
+    xml_parser.DeletePack(call.message.chat.id, call.from_user.id, name)
     menu_handler(call.message)
 
 
@@ -153,7 +144,6 @@ def pack_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.pack_edit, call.message.chat.id)
     name = call.data[10:]
     bot.add_data(call.from_user.id, call.message.chat.id, pack=name)
-    print(name)
     pack_edit_handler(call)
 
 
@@ -217,7 +207,7 @@ def round_create_callback_handler(call: CallbackQuery):
 def round_create_handler(message: Message):
     print(f"{message.chat.id} in round create 2")
     bot.set_state(message.from_user.id, MyStates.pack_edit, message.chat.id)
-    bot.add_data(message.from_user.id, message.chat.id, round=message.text)
+    xml_parser.CreateNewRound(message.chat.id, message.from_user.id, message.text)
     pack_edit_msg_handler(message)
 
 
@@ -233,12 +223,15 @@ def round_final_create_handler(message: Message):
     print(f"{message.chat.id} in final round create 2")
     bot.set_state(message.from_user.id, MyStates.pack_edit, message.chat.id)
     bot.add_data(message.from_user.id, message.chat.id, round=message.text)
+    xml_parser.CreateNewRound(message.chat.id, message.from_user.id, message.text, final=True)
     pack_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "round_delete", state=MyStates.pack_edit)
 def round_delete_callback_handler(call: CallbackQuery):
-    list_of_rounds = ["first", "second", "lol", "anime"]
+    list_of_rounds = xml_parser.GetRounds(call.message.chat.id,
+                                          call.from_user.id) + xml_parser.GetRounds(call.message.chat.id,
+                                                                                    call.from_user.id, final=True)
     markup = InlineKeyboardMarkup(row_width=1)
     for i in list_of_rounds:
         markup.add(InlineKeyboardButton(i, callback_data=f"delete_round_{i}"))
@@ -250,7 +243,9 @@ def round_delete_callback_handler(call: CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data == "round_edit", state=MyStates.pack_edit)
 def round_edit_list_callback_handler(call: CallbackQuery):
-    list_of_rounds = ["first", "second", "lol", "anime"]
+    list_of_rounds = xml_parser.GetRounds(call.message.chat.id,
+                                          call.from_user.id) + xml_parser.GetRounds(call.message.chat.id,
+                                                                                    call.from_user.id, final=True)
     markup = InlineKeyboardMarkup(row_width=1)
     for i in list_of_rounds:
         markup.add(InlineKeyboardButton(i, callback_data=f"edit_round_{i}"))
@@ -268,8 +263,7 @@ def back_menu_callback_handler(call: CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_round_"), state=MyStates.pack_edit)
 def round_delete_callback_handler(call: CallbackQuery):
     name = call.data[13:]
-    print(name)
-    # bot.send_message(call.message.chat.id, "Успешно")
+    xml_parser.DeleteRound(call.message.chat.id, call.from_user.id, name)
     pack_edit_handler(call)
 
 
@@ -278,7 +272,6 @@ def round_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.round_edit, call.message.chat.id)
     name = call.data[11:]
     bot.add_data(call.from_user.id, call.message.chat.id, round=name)
-    print(name)
     round_edit_handler(call)
 
 
@@ -341,12 +334,13 @@ def theme_create_handler(message: Message):
     print(f"{message.chat.id} in theme create 2")
     bot.set_state(message.from_user.id, MyStates.round_edit, message.chat.id)
     bot.add_data(message.from_user.id, message.chat.id, theme=message.text)
+    xml_parser.CreateNewTheme(message.chat.id, message.from_user.id, message.text)
     round_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "theme_delete", state=MyStates.round_edit)
 def theme_delete_callback_handler(call: CallbackQuery):
-    list_of_theme = ["first", "second", "lol", "anime"]
+    list_of_theme = xml_parser.GetThemes(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
     for i in list_of_theme:
         markup.add(InlineKeyboardButton(i, callback_data=f"delete_theme_{i}"))
@@ -358,7 +352,7 @@ def theme_delete_callback_handler(call: CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data == "theme_edit", state=MyStates.round_edit)
 def theme_edit_list_callback_handler(call: CallbackQuery):
-    list_of_theme = ["first", "second", "lol", "anime"]
+    list_of_theme = xml_parser.GetThemes(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
     for i in list_of_theme:
         markup.add(InlineKeyboardButton(i, callback_data=f"edit_theme_{i}"))
@@ -376,8 +370,7 @@ def back_menu_theme_callback_handler(call: CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_theme_"), state=MyStates.round_edit)
 def theme_delete_callback_handler(call: CallbackQuery):
     name = call.data[13:]
-    print(name)
-    # bot.send_message(call.message.chat.id, "Успешно")
+    xml_parser.DeleteTheme(call.message.chat.id, call.from_user.id, name)
     round_edit_handler(call)
 
 
@@ -386,7 +379,6 @@ def theme_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.theme_edit, call.message.chat.id)
     name = call.data[11:]
     bot.add_data(call.from_user.id, call.message.chat.id, theme=name)
-    print(name)
     theme_edit_handler(call)
 
 
@@ -449,21 +441,20 @@ def question_create_callback_handler(call: CallbackQuery):
 @bot.message_handler(state=MyStates.question_create)
 def question_create_handler(message: Message):
     print(f"{message.chat.id} in question create 2")
-    print(message.text)  # ######################################################
+    try:
+        price = xml_parser.CheckPrice(message.text)
+        xml_parser.CreateNewQuestion(message.chat.id, message.from_user.id, price)
+    except ValueError:
+        bot.send_message(message.chat.id, "Введите число")
     bot.set_state(message.from_user.id, MyStates.theme_edit, message.chat.id)
-    bot.add_data(message.from_user.id, message.chat.id, question=str(uuid1()))
-    # bot.send_message(message.chat.id, "Успешно")
     theme_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "question_delete", state=MyStates.theme_edit)
 def question_delete_callback_handler(call: CallbackQuery):
-    # list_of_questions = ["100", "200", "300", "400"]
-    dict_of_questions = [(1, "100"), (2, "200"), (3, "300"), (4, "400")]
-    # dict_of_questions = {"1": "100", "2": "200", "3": "300", "4": "400"}
+    dict_of_questions = xml_parser.GetQuestions(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
     for i, value in enumerate(dict_of_questions):
-        # markup.add(InlineKeyboardButton(i, callback_data=f"delete_question_{i}"))
         markup.add(InlineKeyboardButton(f"{i}. {value[1]}", callback_data=f"delete_question_{value[0]}"))
     markup.add(InlineKeyboardButton("Назад", callback_data="back_to_theme_edit_menu"))
     bot.edit_message_text(chat_id=call.message.chat.id,
@@ -473,13 +464,10 @@ def question_delete_callback_handler(call: CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data == "question_edit", state=MyStates.theme_edit)
 def question_edit_list_callback_handler(call: CallbackQuery):
-    # list_of_questions = ["100", "200", "300", "400"]
-    dict_of_questions = [(1, "100"), (5, "200"), (3, "300"), (4, "400")]
+    dict_of_questions = xml_parser.GetQuestions(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
     for i, value in enumerate(dict_of_questions):
         markup.add(InlineKeyboardButton(f"{i}. {value[1]}", callback_data=f"edit_question_{value[0]}"))
-    # for i in list_of_questions:
-    #     markup.add(InlineKeyboardButton(i, callback_data=f"edit_question_{i}"))
     markup.add(InlineKeyboardButton("Назад", callback_data="back_to_theme_edit_menu"))
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
@@ -493,9 +481,8 @@ def back_menu_question_callback_handler(call: CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_question_"), state=MyStates.theme_edit)
 def question_delete_callback_handler(call: CallbackQuery):
-    name = call.data[13:]
-    print(name)
-    # bot.send_message(call.message.chat.id, "Успешно")
+    uid = call.data[13:]
+    xml_parser.DeleteQuestion(call.message.chat.id, call.from_user.id, uid)
     theme_edit_handler(call)
 
 
@@ -504,7 +491,6 @@ def question_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.question_edit, call.message.chat.id)
     name = call.data[14:]
     bot.add_data(call.from_user.id, call.message.chat.id, question=name)
-    print(name)
     question_edit_handler(call)
 
 
@@ -520,7 +506,12 @@ def question_edit_handler(call: CallbackQuery):
         pack_ = data["pack"]
         round_ = data["round"]
         theme_ = data["theme"]
-    txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса"
+    cost = xml_parser.GetQuestionPrice(call.message.chat.id, call.from_user.id)
+    ans = xml_parser.GetQuestionAnswer(call.message.chat.id, call.from_user.id)
+    if ans is None:
+        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
+    else:
+        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\n Ответ: {ans}"
     try:
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id, text=txt, reply_markup=markup)
@@ -541,7 +532,12 @@ def question_edit_msg_handler(message: Message):
         pack_ = data["pack"]
         round_ = data["round"]
         theme_ = data["theme"]
-    txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса"
+    cost = xml_parser.GetQuestionPrice(message.chat.id, message.from_user.id)
+    ans = xml_parser.GetQuestionAnswer(message.chat.id, message.from_user.id)
+    if ans is None:
+        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
+    else:
+        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\n Ответ: {ans}"
     try:
         bot.edit_message_text(chat_id=message.chat.id,
                               message_id=message.message_id, text=txt, reply_markup=markup)
@@ -568,8 +564,11 @@ def question_create_callback_handler(call: CallbackQuery):
 def question_create_handler(message: Message):
     print(f"{message.chat.id} in question cost 2")
     bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
-    bot.add_data(message.from_user.id, message.chat.id, question_cost=message.text)
-    # bot.send_message(message.chat.id, "Успешно")
+    try:
+        price = xml_parser.CheckPrice(message.text)
+        xml_parser.SetQuestionPrice(message.chat.id, message.from_user.id, price)
+    except ValueError:
+        bot.send_message(message.chat.id, "Введите число")
     question_edit_msg_handler(message)
 
 
@@ -584,8 +583,7 @@ def question_create_callback_handler(call: CallbackQuery):
 def question_create_handler(message: Message):
     print(f"{message.chat.id} in question answer 2")
     bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
-    bot.add_data(message.from_user.id, message.chat.id, question_ans=message.text)
-    # bot.send_message(message.chat.id, "Успешно")
+    xml_parser.SetQuestionAnswer(message.chat.id, message.from_user.id, message.text)
     question_edit_msg_handler(message)
 
 
