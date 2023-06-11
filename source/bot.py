@@ -451,7 +451,7 @@ def question_create_handler(message: Message):
     print(f"{message.chat.id} in question create 2")
     print(message.text)  # ######################################################
     bot.set_state(message.from_user.id, MyStates.theme_edit, message.chat.id)
-    bot.add_data(message.from_user.id, message.chat.id, question=uuid1())
+    bot.add_data(message.from_user.id, message.chat.id, question=str(uuid1()))
     # bot.send_message(message.chat.id, "Успешно")
     theme_edit_msg_handler(message)
 
@@ -567,7 +567,7 @@ def question_create_callback_handler(call: CallbackQuery):
 @bot.message_handler(state=MyStates.question_cost)
 def question_create_handler(message: Message):
     print(f"{message.chat.id} in question cost 2")
-    bot.set_state(message.from_user.id, MyStates.theme_edit, message.chat.id)
+    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
     bot.add_data(message.from_user.id, message.chat.id, question_cost=message.text)
     # bot.send_message(message.chat.id, "Успешно")
     question_edit_msg_handler(message)
@@ -583,7 +583,7 @@ def question_create_callback_handler(call: CallbackQuery):
 @bot.message_handler(state=MyStates.question_answer)
 def question_create_handler(message: Message):
     print(f"{message.chat.id} in question answer 2")
-    bot.set_state(message.from_user.id, MyStates.theme_edit, message.chat.id)
+    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
     bot.add_data(message.from_user.id, message.chat.id, question_ans=message.text)
     # bot.send_message(message.chat.id, "Успешно")
     question_edit_msg_handler(message)
