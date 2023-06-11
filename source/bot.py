@@ -166,7 +166,6 @@ def pack_edit_handler(call: CallbackQuery):
         "Удалить раунд": {"callback_data": "round_delete"},
         "Назад": {"callback_data": "back_to_edit_pack_list"}
     }, row_width=1)
-    # name = ""
     with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
         pack = data["pack"]
     txt = f"Меню\n\nПак {pack}"
@@ -177,6 +176,27 @@ def pack_edit_handler(call: CallbackQuery):
     except Exception as e:
         print(e)
         bot.send_message(chat_id=call.message.chat.id,
+                         text=txt, reply_markup=markup)
+
+
+def pack_edit_msg_handler(message: Message):
+    markup = quick_markup({
+        "Создать финальный раунд": {"callback_data": "round_final_create"},
+        "Создать раунд": {"callback_data": "round_create"},
+        "Редактировать раунд": {"callback_data": "round_edit"},
+        "Удалить раунд": {"callback_data": "round_delete"},
+        "Назад": {"callback_data": "back_to_edit_pack_list"}
+    }, row_width=1)
+    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+        pack = data["pack"]
+    txt = f"Меню\n\nПак {pack}"
+    try:
+        bot.edit_message_text(chat_id=message.chat.id,
+                              message_id=message.message_id,
+                              text=txt, reply_markup=markup)
+    except Exception as e:
+        print(e)
+        bot.send_message(chat_id=message.chat.id,
                          text=txt, reply_markup=markup)
 
 
@@ -194,12 +214,11 @@ def round_create_callback_handler(call: CallbackQuery):
 
 
 @bot.message_handler(state=MyStates.round_create)
-def round_create_handler(call: CallbackQuery):
-    print(f"{call.message.chat.id} in round create 2")
-    bot.set_state(call.from_user.id, MyStates.pack_edit, call.message.chat.id)
-    bot.add_data(call.from_user.id, call.message.chat.id, round=call.message.text)
-    # bot.send_message(message.chat.id, "Успешно")
-    pack_edit_handler(call)
+def round_create_handler(message: Message):
+    print(f"{message.chat.id} in round create 2")
+    bot.set_state(message.from_user.id, MyStates.pack_edit, message.chat.id)
+    bot.add_data(message.from_user.id, message.chat.id, round=message.text)
+    pack_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "round_final_create", state=MyStates.pack_edit)
@@ -210,12 +229,11 @@ def round_final_create_callback_handler(call: CallbackQuery):
 
 
 @bot.message_handler(state=MyStates.round_final_create)
-def round_final_create_handler(call: CallbackQuery):
-    print(f"{call.message.chat.id} in final round create 2")
-    bot.set_state(call.from_user.id, MyStates.pack_edit, call.message.chat.id)
-    bot.add_data(call.from_user.id, call.message.chat.id, round=call.message.text)
-    # bot.send_message(message.chat.id, "Успешно")
-    pack_edit_handler(call)
+def round_final_create_handler(message: Message):
+    print(f"{message.chat.id} in final round create 2")
+    bot.set_state(message.from_user.id, MyStates.pack_edit, message.chat.id)
+    bot.add_data(message.from_user.id, message.chat.id, round=message.text)
+    pack_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "round_delete", state=MyStates.pack_edit)
@@ -285,6 +303,26 @@ def round_edit_handler(call: CallbackQuery):
                          text=txt, reply_markup=markup)
 
 
+def round_edit_msg_handler(message: Message):
+    markup = quick_markup({
+        "Создать тему": {"callback_data": "theme_create"},
+        "Редактировать тему": {"callback_data": "theme_edit"},
+        "Удалить тему": {"callback_data": "theme_delete"},
+        "Назад": {"callback_data": "back_to_edit_round_list"}
+    }, row_width=1)
+    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+        pack_ = data["pack"]
+        round_ = data["round"]
+    txt = f"Меню\n\nПак {pack_}\nРаунд {round_}"
+    try:
+        bot.edit_message_text(chat_id=message.chat.id,
+                              message_id=message.message_id, text=txt, reply_markup=markup)
+    except Exception as e:
+        print(e)
+        bot.send_message(chat_id=message.chat.id,
+                         text=txt, reply_markup=markup)
+
+
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_edit_round_list", state=MyStates.round_edit)
 def back_menu_round_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.pack_edit, call.message.chat.id)
@@ -299,12 +337,11 @@ def theme_create_callback_handler(call: CallbackQuery):
 
 
 @bot.message_handler(state=MyStates.theme_create)
-def theme_create_handler(call: CallbackQuery):
-    print(f"{call.message.chat.id} in theme create 2")
-    bot.set_state(call.from_user.id, MyStates.round_edit, call.message.chat.id)
-    bot.add_data(call.from_user.id, call.message.chat.id, theme=call.message.text)
-    # bot.send_message(message.chat.id, "Успешно")
-    round_edit_handler(call)
+def theme_create_handler(message: Message):
+    print(f"{message.chat.id} in theme create 2")
+    bot.set_state(message.from_user.id, MyStates.round_edit, message.chat.id)
+    bot.add_data(message.from_user.id, message.chat.id, theme=message.text)
+    round_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "theme_delete", state=MyStates.round_edit)
@@ -375,6 +412,27 @@ def theme_edit_handler(call: CallbackQuery):
                          text=txt, reply_markup=markup)
 
 
+def theme_edit_msg_handler(message: Message):
+    markup = quick_markup({
+        "Создать вопрос": {"callback_data": "question_create"},
+        "Редактировать вопрос": {"callback_data": "question_edit"},
+        "Удалить вопрос": {"callback_data": "question_delete"},
+        "Назад": {"callback_data": "back_to_edit_theme_list"}
+    }, row_width=1)
+    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+        pack_ = data["pack"]
+        round_ = data["round"]
+        theme_ = data["theme"]
+    txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}"
+    try:
+        bot.edit_message_text(chat_id=message.chat.id,
+                              message_id=message.message_id, text=txt, reply_markup=markup)
+    except Exception as e:
+        print(e)
+        bot.send_message(chat_id=message.chat.id,
+                         text=txt, reply_markup=markup)
+
+
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_edit_theme_list", state=MyStates.theme_edit)
 def back_menu_theme_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.round_edit, call.message.chat.id)
@@ -389,13 +447,13 @@ def question_create_callback_handler(call: CallbackQuery):
 
 
 @bot.message_handler(state=MyStates.question_create)
-def question_create_handler(call: CallbackQuery):
-    print(f"{call.message.chat.id} in question create 2")
-    print(call.message.text)  # ######################################################
-    bot.set_state(call.from_user.id, MyStates.theme_edit, call.message.chat.id)
-    bot.add_data(call.from_user.id, call.message.chat.id, question=uuid1())
+def question_create_handler(message: Message):
+    print(f"{message.chat.id} in question create 2")
+    print(message.text)  # ######################################################
+    bot.set_state(message.from_user.id, MyStates.theme_edit, message.chat.id)
+    bot.add_data(message.from_user.id, message.chat.id, question=uuid1())
     # bot.send_message(message.chat.id, "Успешно")
-    theme_edit_handler(call)
+    theme_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "question_delete", state=MyStates.theme_edit)
@@ -472,6 +530,27 @@ def question_edit_handler(call: CallbackQuery):
                          text=txt, reply_markup=markup)
 
 
+def question_edit_msg_handler(message: Message):
+    markup = quick_markup({
+        "Редактировать стоимость": {"callback_data": "_question_cost"},
+        "Редактировать ответ": {"callback_data": "_question_answer"},
+        "Редактировать вопрос": {"callback_data": "_question_question"},
+        "Назад": {"callback_data": "back_to_edit_question_list"}
+    }, row_width=1)
+    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+        pack_ = data["pack"]
+        round_ = data["round"]
+        theme_ = data["theme"]
+    txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса"
+    try:
+        bot.edit_message_text(chat_id=message.chat.id,
+                              message_id=message.message_id, text=txt, reply_markup=markup)
+    except Exception as e:
+        print(e)
+        bot.send_message(chat_id=message.chat.id,
+                         text=txt, reply_markup=markup)
+
+
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_edit_question_list", state=MyStates.question_edit)
 def back_menu_question_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.theme_edit, call.message.chat.id)
@@ -486,12 +565,12 @@ def question_create_callback_handler(call: CallbackQuery):
 
 
 @bot.message_handler(state=MyStates.question_cost)
-def question_create_handler(call: CallbackQuery):
-    print(f"{call.message.chat.id} in question cost 2")
-    bot.set_state(call.from_user.id, MyStates.theme_edit, call.message.chat.id)
-    bot.add_data(call.from_user.id, call.message.chat.id, question_cost=call.message.text)
+def question_create_handler(message: Message):
+    print(f"{message.chat.id} in question cost 2")
+    bot.set_state(message.from_user.id, MyStates.theme_edit, message.chat.id)
+    bot.add_data(message.from_user.id, message.chat.id, question_cost=message.text)
     # bot.send_message(message.chat.id, "Успешно")
-    question_edit_handler(call)
+    question_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_answer", state=MyStates.question_edit)
@@ -502,12 +581,12 @@ def question_create_callback_handler(call: CallbackQuery):
 
 
 @bot.message_handler(state=MyStates.question_answer)
-def question_create_handler(call: CallbackQuery):
-    print(f"{call.message.chat.id} in question answer 2")
-    bot.set_state(call.from_user.id, MyStates.theme_edit, call.message.chat.id)
-    bot.add_data(call.from_user.id, call.message.chat.id, question_ans=call.message.text)
+def question_create_handler(message: Message):
+    print(f"{message.chat.id} in question answer 2")
+    bot.set_state(message.from_user.id, MyStates.theme_edit, message.chat.id)
+    bot.add_data(message.from_user.id, message.chat.id, question_ans=message.text)
     # bot.send_message(message.chat.id, "Успешно")
-    question_edit_handler(call)
+    question_edit_msg_handler(message)
 
 
 if __name__ == "__main__":
