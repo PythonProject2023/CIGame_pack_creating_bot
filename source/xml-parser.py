@@ -259,10 +259,15 @@ def GetQuestionAnswer(chat_id, user_id):
     round_name = rs.get_value(chat_id, user_id, 'round')
     theme_name = rs.get_value(chat_id, user_id, 'theme')
     question_uuid = rs.get_value(chat_id, user_id, 'question')
-    return root.find('rounds').find(
-        f"round[@name='{round_name}']").find(
-        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
-        f"question[@uuid='{question_uuid}']").find('right/answer').text
+    try:
+        answer = root.find('rounds').find(
+            f"round[@name='{round_name}']").find(
+            'themes').find(f"theme[@name='{theme_name}']").find(
+            'questions').find(
+            f"question[@uuid='{question_uuid}']").find('right/answer').text
+    except Exception:
+        answer = None
+    return answer
 
 
 def SetQuestionText(chat_id, user_id, question):
