@@ -26,7 +26,8 @@ def GetFileTree(user_id, pack_name):
 def SaveXMLFile(user_id, pack_name, tree):
     """Save XML file."""
     tree.write(os.path.join(packs_directory, user_id,
-                            pack_name, 'content.xml'))
+                            pack_name, 'content.xml'),
+               encoding='utf-8', xml_declaration=True)
 
 
 def CreateUserDirectory(chat_id, user_id):
@@ -212,6 +213,21 @@ def SetQuestionPrice(chat_id, user_id, price: int):
     SaveXMLFile(user_id, pack_name, tree)
 
 
+def GetQuestionPrice(chat_id, user_id):
+    """Get question price."""
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
+    tree, root = GetFileTree(user_id, pack_name)
+    round_name = rs.get_value(chat_id, user_id, 'round')
+    theme_name = rs.get_value(chat_id, user_id, 'theme')
+    question_uuid = rs.get_value(chat_id, user_id, 'question')
+    question = root.find('rounds').find(
+        f"round[@name='{round_name}']").find(
+        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
+        f"question[@uuid='{question_uuid}']")
+    return question.get('price')
+
+
 def SetQuestionAnswer(chat_id, user_id, answer):
     """Set question answer."""
     rs = CreateRedisStorage()
@@ -229,3 +245,17 @@ def SetQuestionAnswer(chat_id, user_id, answer):
     new_answer = ET.SubElement(answers, 'answer')
     new_answer.text = answer
     SaveXMLFile(user_id, pack_name, tree)
+
+
+def GetQuestionAnswer(chat_id, user_id):
+    """Get question answer."""
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
+    tree, root = GetFileTree(user_id, pack_name)
+    round_name = rs.get_value(chat_id, user_id, 'round')
+    theme_name = rs.get_value(chat_id, user_id, 'theme')
+    question_uuid = rs.get_value(chat_id, user_id, 'question')
+    return root.find('rounds').find(
+        f"round[@name='{round_name}']").find(
+        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
+        f"question[@uuid='{question_uuid}']").find('right/answer').text
