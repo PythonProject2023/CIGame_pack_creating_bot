@@ -156,7 +156,9 @@ def back_menu_callback_handler(call: CallbackQuery):
 def pack_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.pack_edit, call.message.chat.id)
     name = call.data[10:]
-    bot.add_data(call.from_user.id, call.message.chat.id, pack=name, final_round_exist=False)
+    bot.add_data(call.from_user.id, call.message.chat.id, pack=name)
+    final_round_exists = (len(xml_parser.GetRounds(call.message.chat.id, call.from_user.id, final=True) > 0))
+    bot.add_data(call.from_user.id, call.message.chat.id, final_round_exist=final_round_exists)
     pack_edit_handler(call)
 
 
@@ -425,7 +427,9 @@ def theme_delete_callback_handler(call: CallbackQuery):
 def theme_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.theme_edit, call.message.chat.id)
     name = call.data[11:]
-    bot.add_data(call.from_user.id, call.message.chat.id, theme=name, final_quest_exist=False)
+    bot.add_data(call.from_user.id, call.message.chat.id, theme=name)
+    final_question_exists = (len(xml_parser.GetQuestions(call.message.chat.id, call.from_user.id)) > 0)
+    bot.add_data(call.from_user.id, call.message.chat.id, final_quest_exist=final_question_exists)
     theme_edit_handler(call)
 
 
@@ -577,7 +581,7 @@ def back_menu_question_callback_handler(call: CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_question_"), state=MyStates.theme_edit)
 def question_delete_callback_handler(call: CallbackQuery):
-    uid = call.data[13:]
+    uid = call.data[16:]
     with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
         final_ = data["final"]
     if final_:
@@ -747,7 +751,7 @@ def file_handler(message: Message):
         xml_parser.SetQuestionFile(message.chat.id,
                                    message.from_user.id,
                                    f"../packs/{message.chat.id}/{pack_}/.files/" + message.photo[1].file_id + ".png",
-                                   "photo")
+                                   "image")
     elif message.content_type == 'audio':
         file_info = bot.get_file(message.audio.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
@@ -783,7 +787,7 @@ def file_handler(message: Message):
         xml_parser.SetQuestionFile(message.chat.id,
                                    message.from_user.id,
                                    f"../packs/{message.chat.id}/{pack_}/.files/" + message.video.file_id + ".mp4",
-                                   "audio")
+                                   "video")
     elif message.content_type == 'video_note':
         file_info = bot.get_file(message.video_note.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
@@ -795,7 +799,7 @@ def file_handler(message: Message):
         xml_parser.SetQuestionFile(message.chat.id,
                                    message.from_user.id,
                                    f"../packs/{message.chat.id}/{pack_}/.files/" + message.video_note.file_id + ".mp4",
-                                   "audio")
+                                   "video")
     elif message.content_type == 'text':
         xml_parser.SetQuestionText(message.chat.id, message.from_user.id, message.text)
     bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
