@@ -722,7 +722,8 @@ def question_edit_handler(call: CallbackQuery):
         if quest_type is not None:
             txt += '\nТип вопроса: '
             if quest_type == 'cat':
-                txt += 'Кот в мешке'
+                real_cost = ""
+                txt += f'Кот в мешке {real_cost}'
             elif quest_type == 'risk':
                 txt += 'Вопрос без риска'
     try:
@@ -781,7 +782,8 @@ def question_edit_msg_handler(message: Message):
         if quest_type is not None:
             txt += '\nТип вопроса: '
             if quest_type == 'cat':
-                txt += 'Кот в мешке'
+                real_cost = ""
+                txt += f'Кот в мешке {real_cost}'
             elif quest_type == 'risk':
                 txt += 'Вопрос без риска'
     try:
