@@ -156,7 +156,9 @@ def back_menu_callback_handler(call: CallbackQuery):
 def pack_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.pack_edit, call.message.chat.id)
     name = call.data[10:]
-    bot.add_data(call.from_user.id, call.message.chat.id, pack=name, final_round_exist=False)
+    bot.add_data(call.from_user.id, call.message.chat.id, pack=name)
+    final_round_exists = (len(xml_parser.GetRounds(call.message.chat.id, call.from_user.id, final=True) > 0))
+    bot.add_data(call.from_user.id, call.message.chat.id, final_round_exist=final_round_exists)
     pack_edit_handler(call)
 
 
