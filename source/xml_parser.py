@@ -302,8 +302,10 @@ def SetQuestionText(chat_id, user_id, question):
         'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
         f"question[@uuid='{question_uuid}']").find('scenario')
     for q in scenario.findall('atom'):
-        scenario.remove(q)
-    question_text = ET.SubElement(scenario, 'atom')
+        if q.get('type') != 'say':
+            scenario.remove(q)
+    question_text = ET.Element('atom')
+    scenario.insert(0, question_text)
     question_text.text = question
     SaveXMLFile(user_id, pack_name, tree)
 
@@ -336,8 +338,10 @@ def SetQuestionFile(chat_id, user_id, file_abs_path, file_type):
         'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
         f"question[@uuid='{question_uuid}']").find('scenario')
     for q in scenario.findall('atom'):
-        scenario.remove(q)
-    question_file = ET.SubElement(scenario, 'atom')
+        if q.get('type') != 'say':
+            scenario.remove(q)
+    question_file = ET.Element('atom')
+    scenario.insert(0, question_file)
     if file_type == 'image':
         question_file.set('type', 'image')
     elif file_type == 'audio':
@@ -346,6 +350,146 @@ def SetQuestionFile(chat_id, user_id, file_abs_path, file_type):
         question_file.set('type', 'video')
     question_file.text = '@' + file_uuid + '.' + file_format
     SaveXMLFile(user_id, pack_name, tree)
+
+
+def GetQuestionForm(chat_id, user_id):
+    """
+    Get question form.
+
+    Returns (None, None) if there is no question,
+    (text, 'text') if it is text or
+    (path_to_file, 'file' if it is video, voice or image.
+    """
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
+    tree, root = GetFileTree(user_id, pack_name)
+    round_name = rs.get_value(chat_id, user_id, 'round')
+    theme_name = rs.get_value(chat_id, user_id, 'theme')
+    question_uuid = rs.get_value(chat_id, user_id, 'question')
+    scenario = root.find('rounds').find(
+        f"round[@name='{round_name}']").find(
+        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
+        f"question[@uuid='{question_uuid}']").find('scenario')
+    res = None
+    q_type = None
+    for atom in scenario.findall('atom'):
+        if atom.get('type') != 'say':
+            if atom.get('type') is None:
+                res = atom.text
+                q_type = 'text'
+            else:
+                q_type = 'file'
+                assert atom.get('type') in ['image', 'voice', 'video']
+                folders_names = {'image': 'Images',
+                                 'voice': 'Audio',
+                                 'video': 'Video'}
+                res = os.path.join(packs_directory, str(user_id),
+                                   pack_name, folders_names[atom.get('type')],
+                                   atom.text[1:])
+    return (res, q_type)
+
+
+def SetQuestionType(chat_id, user_id, q_type, new_theme=None, new_cost=None):
+    """Set question type."""
+    assert q_type in ['usual', 'cat', 'risk']
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
+    tree, root = GetFileTree(user_id, pack_name)
+    round_name = rs.get_value(chat_id, user_id, 'round')
+    theme_name = rs.get_value(chat_id, user_id, 'theme')
+    question_uuid = rs.get_value(chat_id, user_id, 'question')
+    question = root.find('rounds').find(
+        f"round[@name='{round_name}']").find(
+        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
+        f"question[@uuid='{question_uuid}']")
+    old_type_tag = question.find('type')
+    if old_type_tag is not None:
+        question.remove(old_type_tag)
+    if q_type == 'usual':
+        return
+    type_tag = ET.Element('atom')
+    question.insert(0, type_tag)
+    if q_type == 'risk':
+        type_tag.set('name', 'sponsored')
+    else:
+        type_tag.set('name', 'bagcat')
+        theme_tag = ET.SubElement(type_tag, 'param')
+        theme_tag.set('name', 'theme')
+        theme_tag.text = new_theme
+        cost_tag = ET.SubElement(type_tag, 'param')
+        cost_tag.set('name', 'cost')
+        cost_tag.text = new_cost
+        self_tag = ET.SubElement(type_tag, 'param')
+        self_tag.set('name', 'self')
+        self_tag.text = 'false'
+        knows_tag = ET.SubElement(type_tag, 'param')
+        knows_tag.set('name', 'knows')
+        knows_tag.text = 'after'
+    SaveXMLFile(user_id, pack_name, tree)
+
+
+def GetQuestionType(chat_id, user_id):
+    """
+    Get question type.
+
+    Returns dictionary with key 'type'. Value can be
+    'usual', 'risk', 'cat' (if cat there are also keys
+    'cost' and 'theme').
+    """
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
+    tree, root = GetFileTree(user_id, pack_name)
+    round_name = rs.get_value(chat_id, user_id, 'round')
+    theme_name = rs.get_value(chat_id, user_id, 'theme')
+    question_uuid = rs.get_value(chat_id, user_id, 'question')
+    question = root.find('rounds').find(
+        f"round[@name='{round_name}']").find(
+        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
+        f"question[@uuid='{question_uuid}']")
+    if question.get('type') is None:
+        return {'type': 'usual'}
+    type_tag = question.find('type')
+    if type_tag.get('name') == 'sponsored':
+        return {'type': 'risk'}
+    new_theme = type_tag.find("param[@name='theme']").text
+    new_cost = type_tag.find("param[@name='cost']").text
+    return {'type': 'cat', 'cost': new_cost, 'theme': new_theme}
+
+
+def SetQuestionComment(chat_id, user_id, comment_text):
+    """Set question comment."""
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
+    tree, root = GetFileTree(user_id, pack_name)
+    round_name = rs.get_value(chat_id, user_id, 'round')
+    theme_name = rs.get_value(chat_id, user_id, 'theme')
+    question_uuid = rs.get_value(chat_id, user_id, 'question')
+    scenario = root.find('rounds').find(
+        f"round[@name='{round_name}']").find(
+        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
+        f"question[@uuid='{question_uuid}']").find('scenario')
+    if scenario.find("atom[@type='say']") is None:
+        scenario.append(ET.Element('atom', {'type': 'say'}))
+    comment = scenario.find("atom[@type='say']")
+    comment.text = comment_text
+    SaveXMLFile(user_id, pack_name, tree)
+
+
+def GetQuestionComment(chat_id, user_id):
+    """Get question comment. Returns None or comment text."""
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
+    tree, root = GetFileTree(user_id, pack_name)
+    round_name = rs.get_value(chat_id, user_id, 'round')
+    theme_name = rs.get_value(chat_id, user_id, 'theme')
+    question_uuid = rs.get_value(chat_id, user_id, 'question')
+    scenario = root.find('rounds').find(
+        f"round[@name='{round_name}']").find(
+        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
+        f"question[@uuid='{question_uuid}']").find('scenario')
+    if scenario.find("atom[@type='say']") is None:
+        return None
+    return scenario.find("atom[@type='say']").text
 
 
 def LoadPackToSiq(chat_id, user_id, pack_name):
