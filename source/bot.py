@@ -577,7 +577,7 @@ def back_menu_question_callback_handler(call: CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_question_"), state=MyStates.theme_edit)
 def question_delete_callback_handler(call: CallbackQuery):
-    uid = call.data[13:]
+    uid = call.data[16:]
     with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
         final_ = data["final"]
     if final_:
