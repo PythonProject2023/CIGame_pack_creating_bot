@@ -122,9 +122,22 @@ def pack_edit_list_callback_handler(call: CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data.startswith("download_pack_"), state=MyStates.menu_state)
 def pack_download_callback_handler(call: CallbackQuery):
     name = call.data[14:]
-    path = xml_parser.LoadPackToSiq(call.message.chat.id, call.from_user.id, name)
-    print(path)
-    menu_handler(call.message)
+    try:
+        path = xml_parser.LoadPackToSiq(call.message.chat.id, call.from_user.id, name)
+        file = open(path, 'rb')
+        bot.send_document(call.message.chat.id, file)
+        bot.send_message(call.message.chat.id, "Успешно")
+    except Exception as e:
+        print(e)
+        bot.send_message(call.message.chat.id, "Ошибка")
+    markup = quick_markup({
+        "Создать новый пак": {"callback_data": "pack_create"},
+        "Редактировать пак": {"callback_data": "pack_edit"},
+        "Выгрузить пак": {"callback_data": "pack_download"},
+        "Удалить пак": {"callback_data": "pack_delete"},
+        "Смена языка": {"callback_data": "language"}
+    })
+    bot.send_message(chat_id=call.message.chat.id, text="Меню", reply_markup=markup)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_pack_"), state=MyStates.menu_state)
@@ -706,6 +719,86 @@ def question_create_handler(message: Message):
     print(f"{message.chat.id} in question answer 2")
     bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
     xml_parser.SetQuestionAnswer(message.chat.id, message.from_user.id, message.text)
+    question_edit_msg_handler(message)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_question", state=MyStates.question_edit)
+def question_question_handler(call: CallbackQuery):
+    print(f"{call.message.chat.id} in question question 1")
+    bot.set_state(call.from_user.id, MyStates.question_question, call.message.chat.id)
+    bot.send_message(call.message.chat.id, "Введите вопрос или отправьте файл\n"\
+                                           "Поддерживаются фото, видео, кружочки, аудио, голосовые")
+
+
+@bot.message_handler(content_types=['photo', 'audio', 'video', 'voice', 'video_note', 'text'],
+                     state=MyStates.question_question)
+def file_handler(message: Message):
+    print(f"{message.chat.id} in question question 2")
+    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+        pack_ = data["pack"]
+    if message.content_type == 'photo':
+        file_info = bot.get_file(message.photo[len(message.photo) - 1].file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
+        if not os.path.exists(f"../packs/{message.chat.id}/{pack_}/.files/"):
+            os.makedirs(f"../packs/{message.chat.id}/{pack_}/.files/")
+        src = f"../packs/{message.chat.id}/{pack_}/.files/" + message.photo[1].file_id + ".png"
+        with open(src, 'wb') as new_file:
+            new_file.write(downloaded_file)
+        xml_parser.SetQuestionFile(message.chat.id,
+                                   message.from_user.id,
+                                   f"../packs/{message.chat.id}/{pack_}/.files/" + message.photo[1].file_id + ".png",
+                                   "photo")
+    elif message.content_type == 'audio':
+        file_info = bot.get_file(message.audio.file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
+        if not os.path.exists(f"../packs/{message.chat.id}/{pack_}/.files/"):
+            os.makedirs(f"../packs/{message.chat.id}/{pack_}/.files/")
+        src = f"../packs/{message.chat.id}/{pack_}/.files/" + message.audio.file_id + ".ogg"
+        with open(src, 'wb') as new_file:
+            new_file.write(downloaded_file)
+        xml_parser.SetQuestionFile(message.chat.id,
+                                   message.from_user.id,
+                                   f"../packs/{message.chat.id}/{pack_}/.files/" + message.audio.file_id + ".ogg",
+                                   "audio")
+    elif message.content_type == 'voice':
+        file_info = bot.get_file(message.voice.file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
+        if not os.path.exists(f"../packs/{message.chat.id}/{pack_}/.files/"):
+            os.makedirs(f"../packs/{message.chat.id}/{pack_}/.files/")
+        src = f"../packs/{message.chat.id}/{pack_}/.files/" + message.voice.file_id + ".ogg"
+        with open(src, 'wb') as new_file:
+            new_file.write(downloaded_file)
+        xml_parser.SetQuestionFile(message.chat.id,
+                                   message.from_user.id,
+                                   f"../packs/{message.chat.id}/{pack_}/.files/" + message.voice.file_id + ".ogg",
+                                   "audio")
+    elif message.content_type == 'video':
+        file_info = bot.get_file(message.video.file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
+        if not os.path.exists(f"../packs/{message.chat.id}/{pack_}/.files/"):
+            os.makedirs(f"../packs/{message.chat.id}/{pack_}/.files/")
+        src = f"../packs/{message.chat.id}/{pack_}/.files/" + message.video.file_id + ".mp4"
+        with open(src, 'wb') as new_file:
+            new_file.write(downloaded_file)
+        xml_parser.SetQuestionFile(message.chat.id,
+                                   message.from_user.id,
+                                   f"../packs/{message.chat.id}/{pack_}/.files/" + message.video.file_id + ".mp4",
+                                   "audio")
+    elif message.content_type == 'video_note':
+        file_info = bot.get_file(message.video_note.file_id)
+        downloaded_file = bot.download_file(file_info.file_path)
+        if not os.path.exists(f"../packs/{message.chat.id}/{pack_}/.files/"):
+            os.makedirs(f"../packs/{message.chat.id}/{pack_}/.files/")
+        src = f"../packs/{message.chat.id}/{pack_}/.files/" + message.video_note.file_id + ".mp4"
+        with open(src, 'wb') as new_file:
+            new_file.write(downloaded_file)
+        xml_parser.SetQuestionFile(message.chat.id,
+                                   message.from_user.id,
+                                   f"../packs/{message.chat.id}/{pack_}/.files/" + message.video_note.file_id + ".mp4",
+                                   "audio")
+    elif message.content_type == 'text':
+        xml_parser.SetQuestionText(message.chat.id, message.from_user.id, message.text)
+    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
     question_edit_msg_handler(message)
 
 
