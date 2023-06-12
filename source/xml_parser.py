@@ -30,6 +30,21 @@ def SaveXMLFile(user_id, pack_name, tree):
                encoding='utf-8', xml_declaration=True)
 
 
+def DeleteRelatedFiles(user_id, pack_name, scenario):
+    """Delete all the files related to scenario."""
+    pack_dir = os.path.join(packs_directory, str(user_id), pack_name)
+    for atom in scenario.findall('atom'):
+        if atom.get('type') == 'image':
+            image_name = atom.text[1:]
+            os.remove(os.path.join(pack_dir, 'Images', image_name))
+        if atom.get('type') == 'voice':
+            voice_name = atom.text[1:]
+            os.remove(os.path.join(pack_dir, 'Audio', voice_name))
+        if atom.get('type') == 'video':
+            video_name = atom.text[1:]
+            os.remove(os.path.join(pack_dir, 'Video', video_name))
+
+
 def CreateUserDirectory(chat_id, user_id):
     """Create a directory with users packs."""
     if not os.path.exists(os.path.join(packs_directory, str(user_id))):
@@ -189,17 +204,7 @@ def DeleteQuestion(chat_id, user_id, q_uuid):
         f"round[@name='{round_name}']").find(
         'themes').find(f"theme[@name='{theme_name}']").find('questions')
     question = questions.find(f"question[@uuid='{q_uuid}']")
-    pack_dir = os.path.join(packs_directory, str(user_id), pack_name)
-    for atom in question.find('scenario').findall('atom'):
-        if atom.get('type') == 'image':
-            image_name = atom.text[1:]
-            os.remove(os.path.join(pack_dir, 'Images', image_name))
-        if atom.get('type') == 'voice':
-            voice_name = atom.text[1:]
-            os.remove(os.path.join(pack_dir, 'Audio', voice_name))
-        if atom.get('type') == 'video':
-            video_name = atom.text[1:]
-            os.remove(os.path.join(pack_dir, 'Video', video_name))
+    DeleteRelatedFiles(user_id, pack_name, question.find('scenario'))
     questions.remove(question)
     SaveXMLFile(user_id, pack_name, tree)
 
@@ -301,6 +306,7 @@ def SetQuestionText(chat_id, user_id, question):
         f"round[@name='{round_name}']").find(
         'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
         f"question[@uuid='{question_uuid}']").find('scenario')
+    DeleteRelatedFiles(user_id, pack_name, scenario)
     for q in scenario.findall('atom'):
         if q.get('type') != 'say':
             scenario.remove(q)
@@ -337,6 +343,7 @@ def SetQuestionFile(chat_id, user_id, file_abs_path, file_type):
         f"round[@name='{round_name}']").find(
         'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
         f"question[@uuid='{question_uuid}']").find('scenario')
+    DeleteRelatedFiles(user_id, pack_name, scenario)
     for q in scenario.findall('atom'):
         if q.get('type') != 'say':
             scenario.remove(q)
@@ -406,6 +413,7 @@ def SetQuestionType(chat_id, user_id, q_type, new_theme=None, new_cost=None):
     if old_type_tag is not None:
         question.remove(old_type_tag)
     if q_type == 'usual':
+        SaveXMLFile(user_id, pack_name, tree)
         return
     type_tag = ET.Element('type')
     question.insert(0, type_tag)
