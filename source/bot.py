@@ -805,6 +805,11 @@ def back_question_list_callback_handler(call: CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data == "_question_view", state=MyStates.question_edit)
 def question_view_callback_handler(call: CallbackQuery):
     """View the question."""
+    obj, type_obj = xml_parser.GetQuestionForm(call.message.chat.id, call.from_user.id)
+    if type_obj == "text":
+        bot.send_message(call.message.chat.id, obj)
+    elif type_obj == "file":
+        file = open(obj, 'rb')
     question_edit_handler(call)
 
 
