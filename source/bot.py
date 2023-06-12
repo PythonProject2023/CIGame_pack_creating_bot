@@ -693,6 +693,7 @@ def question_edit_handler(call: CallbackQuery):
             "Посмотреть вопрос": {"callback_data": "_question_view"},
             "Редактировать пояснение": {"callback_data": "_question_annotation"},
             "Удалить пояснение": {"callback_data": "_question_annotation_delete"},
+            "Изменить тип вопроса": {"callback_data": "_question_type"},
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     ans = xml_parser.GetQuestionAnswer(call.message.chat.id, call.from_user.id)
@@ -743,6 +744,7 @@ def question_edit_msg_handler(message: Message):
             "Посмотреть вопрос": {"callback_data": "_question_view"},
             "Редактировать пояснение": {"callback_data": "_question_annotation"},
             "Удалить пояснение": {"callback_data": "_question_annotation_delete"},
+            "Изменить тип вопроса": {"callback_data": "_question_type"},
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     ans = xml_parser.GetQuestionAnswer(message.chat.id, message.from_user.id)
