@@ -31,6 +31,8 @@ class MyStates(StatesGroup):
     question_cost = State()
     question_answer = State()
     question_question = State()
+    question_annotation = State()
+    question_cat_cost = State()
 
 
 @bot.message_handler(commands=["start"])
@@ -402,8 +404,13 @@ def round_edit_msg_handler(message: Message):
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_edit_round_list", state=MyStates.round_edit)
 def back_round_list_callback_handler(call: CallbackQuery):
     """Back to selecting the round to edit."""
+    with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
+        final_ = data["final"]
     bot.set_state(call.from_user.id, MyStates.pack_edit, call.message.chat.id)
-    round_edit_list_callback_handler(call)
+    if final_:
+        round_final_edit_list_callback_handler(call)
+    else:
+        round_edit_list_callback_handler(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "theme_create", state=MyStates.round_edit)
@@ -679,6 +686,9 @@ def question_edit_handler(call: CallbackQuery):
         markup = quick_markup({
             "Редактировать ответ": {"callback_data": "_question_answer"},
             "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Посмотреть вопрос": {"callback_data": "_question_view"},
+            "Редактировать пояснение": {"callback_data": "_question_annotation"},
+            "Удалить пояснение": {"callback_data": "_question_annotation_delete"},
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     else:
@@ -686,9 +696,14 @@ def question_edit_handler(call: CallbackQuery):
             "Редактировать стоимость": {"callback_data": "_question_cost"},
             "Редактировать ответ": {"callback_data": "_question_answer"},
             "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Посмотреть вопрос": {"callback_data": "_question_view"},
+            "Редактировать пояснение": {"callback_data": "_question_annotation"},
+            "Удалить пояснение": {"callback_data": "_question_annotation_delete"},
+            "Изменить тип вопроса": {"callback_data": "_question_type"},
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     ans = xml_parser.GetQuestionAnswer(call.message.chat.id, call.from_user.id)
+    annotation = None
     if final_:
         if ans is None:
             txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса"
@@ -700,6 +715,17 @@ def question_edit_handler(call: CallbackQuery):
             txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
         else:
             txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
+    if annotation is not None:
+        txt += f"\nПояснение: {annotation}"
+    if not final_:
+        quest_type = None
+        if quest_type is not None:
+            txt += '\nТип вопроса: '
+            if quest_type == 'cat':
+                real_cost = ""
+                txt += f'Кот в мешке {real_cost}'
+            elif quest_type == 'risk':
+                txt += 'Вопрос без риска'
     try:
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id, text=txt, reply_markup=markup)
@@ -720,6 +746,9 @@ def question_edit_msg_handler(message: Message):
         markup = quick_markup({
             "Редактировать ответ": {"callback_data": "_question_answer"},
             "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Посмотреть вопрос": {"callback_data": "_question_view"},
+            "Редактировать пояснение": {"callback_data": "_question_annotation"},
+            "Удалить пояснение": {"callback_data": "_question_annotation_delete"},
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     else:
@@ -727,9 +756,14 @@ def question_edit_msg_handler(message: Message):
             "Редактировать стоимость": {"callback_data": "_question_cost"},
             "Редактировать ответ": {"callback_data": "_question_answer"},
             "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Посмотреть вопрос": {"callback_data": "_question_view"},
+            "Редактировать пояснение": {"callback_data": "_question_annotation"},
+            "Удалить пояснение": {"callback_data": "_question_annotation_delete"},
+            "Изменить тип вопроса": {"callback_data": "_question_type"},
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     ans = xml_parser.GetQuestionAnswer(message.chat.id, message.from_user.id)
+    annotation = None
     if final_:
         if ans is None:
             txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса"
@@ -741,6 +775,17 @@ def question_edit_msg_handler(message: Message):
             txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
         else:
             txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
+    if annotation is not None:
+        txt += f"\nПояснение: {annotation}"
+    if not final_:
+        quest_type = None
+        if quest_type is not None:
+            txt += '\nТип вопроса: '
+            if quest_type == 'cat':
+                real_cost = ""
+                txt += f'Кот в мешке {real_cost}'
+            elif quest_type == 'risk':
+                txt += 'Вопрос без риска'
     try:
         bot.edit_message_text(chat_id=message.chat.id,
                               message_id=message.message_id, text=txt, reply_markup=markup)
@@ -755,6 +800,41 @@ def back_question_list_callback_handler(call: CallbackQuery):
     """Back to selecting the question to edit."""
     bot.set_state(call.from_user.id, MyStates.theme_edit, call.message.chat.id)
     question_edit_list_callback_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_view", state=MyStates.question_edit)
+def question_view_callback_handler(call: CallbackQuery):
+    """View the question."""
+    question_edit_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_annotation_delete", state=MyStates.question_edit)
+def question_annotation_delete_callback_handler(call: CallbackQuery):
+    """Delete the annotation of the question."""
+    question_edit_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_annotation", state=MyStates.question_edit)
+def question_annotation_callback_handler(call: CallbackQuery):
+    """Enter the annotation of the question by the user."""
+    print(f"{call.message.chat.id} in question annotation 1")
+    bot.set_state(call.from_user.id, MyStates.question_annotation, call.message.chat.id)
+    bot.send_message(call.message.chat.id, "Введите пояснение к вопросу:")
+
+
+def question_annotation_msg_handler(message: Message):
+    """Enter the annotation of the question by the user."""
+    print(f"{message.chat.id} in question annotation 1")
+    bot.set_state(message.from_user.id, MyStates.question_annotation, message.chat.id)
+    bot.send_message(message.chat.id, "Введите пояснение к вопросу:")
+
+
+@bot.message_handler(state=MyStates.question_annotation)
+def question_annotation_handler(message: Message):
+    """Edit question annotation."""
+    print(f"{message.chat.id} in question annotation 2")
+    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
+    question_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_cost", state=MyStates.question_edit)
@@ -882,6 +962,63 @@ def file_handler(message: Message):
     elif message.content_type == 'text':
         xml_parser.SetQuestionText(message.chat.id, message.from_user.id, message.text)
     bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
+    question_edit_msg_handler(message)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_type", state=MyStates.question_edit)
+def question_type_list_callback_handler(call: CallbackQuery):
+    """Create buttons with types of question."""
+    markup = quick_markup({
+        "Обычный вопрос": {"callback_data": "_question_type_common"},
+        "Кот в мешке": {"callback_data": "_question_type_cat"},
+        "Вопрос без риска": {"callback_data": "_question_type_risk"},
+        "Назад": {"callback_data": "back_to_question_menu"}
+    }, row_width=1)
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id,
+                          text="Выберите тип", reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "back_to_question_menu", state=MyStates.question_edit)
+def back_to_question_menu_callback_handler(call: CallbackQuery):
+    """Back to question menu."""
+    question_edit_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_type_common", state=MyStates.question_edit)
+def question_type_common_callback_handler(call: CallbackQuery):
+    """Set question type to common."""
+    question_edit_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_type_risk", state=MyStates.question_edit)
+def question_type_risk_callback_handler(call: CallbackQuery):
+    """Set question type to no risk."""
+    question_edit_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_type_cat", state=MyStates.question_edit)
+def question_type_cat_callback_handler(call: CallbackQuery):
+    """Enter cost of cat question."""
+    bot.set_state(call.from_user.id, MyStates.question_cat_cost, call.message.chat.id)
+    bot.send_message(call.message.chat.id, "Введите стоимость вопроса:")
+
+
+def question_type_cat_msg_handler(message: Message):
+    """Enter cost of cat question."""
+    bot.set_state(message.from_user.id, MyStates.question_cat_cost, message.chat.id)
+    bot.send_message(message.chat.id, "Введите стоимость вопроса:")
+
+
+@bot.message_handler(state=MyStates.question_cat_cost)
+def question_cat_cost_handler(message: Message):
+    """Edit cat question cost."""
+    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
+    try:
+        price = xml_parser.CheckPrice(message.text)
+        xml_parser.SetQuestionPrice(message.chat.id, message.from_user.id, price)
+    except ValueError:
+        bot.send_message(message.chat.id, "Введите число")
+        question_type_cat_msg_handler(message)
     question_edit_msg_handler(message)
 
 
