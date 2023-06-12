@@ -69,6 +69,25 @@ def menu_handler(message: Message):
                          text="Меню", reply_markup=markup)
 
 
+def menu_callback_handler(call: CallbackQuery):
+    """Display the main menu."""
+    print(f"{call.message.chat.id} in menu")
+    markup = quick_markup({
+        "Создать новый пак": {"callback_data": "pack_create"},
+        "Редактировать пак": {"callback_data": "pack_edit"},
+        "Выгрузить пак": {"callback_data": "pack_download"},
+        "Удалить пак": {"callback_data": "pack_delete"},
+        "Смена языка": {"callback_data": "language"}
+    }, row_width=1)
+    try:
+        bot.edit_message_text(chat_id=call.message.chat.id,
+                              message_id=call.message.message_id, text="Меню", reply_markup=markup)
+    except Exception as e:
+        print(e)
+        bot.send_message(chat_id=call.message.chat.id,
+                         text="Меню", reply_markup=markup)
+
+
 @bot.callback_query_handler(func=lambda call: call.data == "language", state=MyStates.menu_state)
 def language_callback_handler(call: CallbackQuery):
     """Switch language."""
@@ -163,13 +182,13 @@ def pack_delete_callback_handler(call: CallbackQuery):
     """Delete the pack."""
     name = call.data[12:]
     xml_parser.DeletePack(call.message.chat.id, call.from_user.id, name)
-    menu_handler(call.message)
+    menu_callback_handler(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_menu", state=MyStates.menu_state)
 def back_menu_callback_handler(call: CallbackQuery):
     """Return to main menu."""
-    menu_handler(call.message)
+    menu_callback_handler(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith("edit_pack_"), state=MyStates.menu_state)
