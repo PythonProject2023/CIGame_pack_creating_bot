@@ -962,25 +962,25 @@ def back_to_question_menu_callback_handler(call: CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_type_common", state=MyStates.question_edit)
 def question_type_common_callback_handler(call: CallbackQuery):
-    """Set question type to common"""
+    """Set question type to common."""
     question_edit_handler(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_type_risk", state=MyStates.question_edit)
 def question_type_risk_callback_handler(call: CallbackQuery):
-    """Set question type to no risk"""
+    """Set question type to no risk."""
     question_edit_handler(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_type_cat", state=MyStates.question_edit)
 def question_type_cat_callback_handler(call: CallbackQuery):
-    """Enter cost of cat question"""
+    """Enter cost of cat question."""
     bot.set_state(call.from_user.id, MyStates.question_cat_cost, call.message.chat.id)
     bot.send_message(call.message.chat.id, "Введите стоимость вопроса:")
 
 
 def question_type_cat_msg_handler(message: Message):
-    """Enter cost of cat question"""
+    """Enter cost of cat question."""
     bot.set_state(message.from_user.id, MyStates.question_cat_cost, message.chat.id)
     bot.send_message(message.chat.id, "Введите стоимость вопроса:")
 
