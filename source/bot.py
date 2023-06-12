@@ -847,6 +847,7 @@ def question_annotation_msg_handler(message: Message):
 def question_annotation_handler(message: Message):
     """Edit question annotation."""
     print(f"{message.chat.id} in question annotation 2")
+    xml_parser.SetQuestionComment(message.chat.id, message.from_user.id, message.text)
     bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
     question_edit_msg_handler(message)
 
