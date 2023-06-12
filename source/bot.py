@@ -31,6 +31,7 @@ class MyStates(StatesGroup):
     question_cost = State()
     question_answer = State()
     question_question = State()
+    question_annotation = State()
 
 
 @bot.message_handler(commands=["start"])
@@ -679,6 +680,9 @@ def question_edit_handler(call: CallbackQuery):
         markup = quick_markup({
             "Редактировать ответ": {"callback_data": "_question_answer"},
             "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Посмотреть вопрос": {"callback_data": "_question_view"},
+            "Редактировать пояснение": {"callback_data": "_question_annotation"},
+            "Удалить пояснение": {"callback_data": "_question_annotation_delete"},
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     else:
@@ -686,9 +690,13 @@ def question_edit_handler(call: CallbackQuery):
             "Редактировать стоимость": {"callback_data": "_question_cost"},
             "Редактировать ответ": {"callback_data": "_question_answer"},
             "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Посмотреть вопрос": {"callback_data": "_question_view"},
+            "Редактировать пояснение": {"callback_data": "_question_annotation"},
+            "Удалить пояснение": {"callback_data": "_question_annotation_delete"},
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     ans = xml_parser.GetQuestionAnswer(call.message.chat.id, call.from_user.id)
+    annotation = None
     if final_:
         if ans is None:
             txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса"
@@ -700,6 +708,8 @@ def question_edit_handler(call: CallbackQuery):
             txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
         else:
             txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
+    if annotation is not None:
+        txt += f"\nПояснение: {annotation}"
     try:
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id, text=txt, reply_markup=markup)
@@ -720,6 +730,9 @@ def question_edit_msg_handler(message: Message):
         markup = quick_markup({
             "Редактировать ответ": {"callback_data": "_question_answer"},
             "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Посмотреть вопрос": {"callback_data": "_question_view"},
+            "Редактировать пояснение": {"callback_data": "_question_annotation"},
+            "Удалить пояснение": {"callback_data": "_question_annotation_delete"},
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     else:
@@ -727,9 +740,13 @@ def question_edit_msg_handler(message: Message):
             "Редактировать стоимость": {"callback_data": "_question_cost"},
             "Редактировать ответ": {"callback_data": "_question_answer"},
             "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Посмотреть вопрос": {"callback_data": "_question_view"},
+            "Редактировать пояснение": {"callback_data": "_question_annotation"},
+            "Удалить пояснение": {"callback_data": "_question_annotation_delete"},
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     ans = xml_parser.GetQuestionAnswer(message.chat.id, message.from_user.id)
+    annotation = None
     if final_:
         if ans is None:
             txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса"
@@ -741,6 +758,8 @@ def question_edit_msg_handler(message: Message):
             txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
         else:
             txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
+    if annotation is not None:
+        txt += f"\nПояснение: {annotation}"
     try:
         bot.edit_message_text(chat_id=message.chat.id,
                               message_id=message.message_id, text=txt, reply_markup=markup)
@@ -755,6 +774,41 @@ def back_question_list_callback_handler(call: CallbackQuery):
     """Back to selecting the question to edit."""
     bot.set_state(call.from_user.id, MyStates.theme_edit, call.message.chat.id)
     question_edit_list_callback_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_view", state=MyStates.question_edit)
+def question_view_callback_handler(call: CallbackQuery):
+    """View the question."""
+    question_edit_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_annotation_delete", state=MyStates.question_edit)
+def question_annotation_callback_handler(call: CallbackQuery):
+    """Delete the annotation of the question."""
+    question_edit_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_annotation", state=MyStates.question_edit)
+def question_annotation_callback_handler(call: CallbackQuery):
+    """Enter the annotation of the question by the user."""
+    print(f"{call.message.chat.id} in question annotation 1")
+    bot.set_state(call.from_user.id, MyStates.question_annotation, call.message.chat.id)
+    bot.send_message(call.message.chat.id, "Введите пояснение к вопросу:")
+
+
+def question_annotation_msg_handler(message: Message):
+    """Enter the annotation of the question by the user."""
+    print(f"{message.chat.id} in question annotation 1")
+    bot.set_state(message.from_user.id, MyStates.question_annotation, message.chat.id)
+    bot.send_message(message.chat.id, "Введите пояснение к вопросу:")
+
+
+@bot.message_handler(state=MyStates.question_annotation)
+def question_cost_handler(message: Message):
+    """Edit question annotation."""
+    print(f"{message.chat.id} in question annotation 2")
+    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
+    question_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_cost", state=MyStates.question_edit)
