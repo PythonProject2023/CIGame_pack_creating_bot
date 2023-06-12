@@ -972,7 +972,8 @@ def question_type_list_callback_handler(call: CallbackQuery):
         "Вопрос без риска": {"callback_data": "_question_type_risk"},
         "Назад": {"callback_data": "back_to_question_menu"}
     }, row_width=1)
-    bot.send_message(call.message.chat.id, "Выберите тип", reply_markup=markup)
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.id,
+                          text="Выберите тип", reply_markup=markup)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_question_menu", state=MyStates.question_edit)
