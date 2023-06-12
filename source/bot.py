@@ -425,7 +425,9 @@ def theme_delete_callback_handler(call: CallbackQuery):
 def theme_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.theme_edit, call.message.chat.id)
     name = call.data[11:]
-    bot.add_data(call.from_user.id, call.message.chat.id, theme=name, final_quest_exist=False)
+    bot.add_data(call.from_user.id, call.message.chat.id, theme=name)
+    final_question_exists = (len(xml_parser.GetQuestions(call.message.chat.id, call.from_user.id)) > 0)
+    bot.add_data(call.from_user.id, call.message.chat.id, final_quest_exist=final_question_exists)
     theme_edit_handler(call)
 
 
