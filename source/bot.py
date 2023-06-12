@@ -717,6 +717,14 @@ def question_edit_handler(call: CallbackQuery):
             txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
     if annotation is not None:
         txt += f"\nПояснение: {annotation}"
+    if not final_:
+        quest_type = None
+        if quest_type is not None:
+            txt += '\nТип вопроса: '
+            if quest_type == 'cat':
+                txt += 'Кот в мешке'
+            elif quest_type == 'risk':
+                txt += 'Вопрос без риска'
     try:
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id, text=txt, reply_markup=markup)
@@ -768,6 +776,14 @@ def question_edit_msg_handler(message: Message):
             txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
     if annotation is not None:
         txt += f"\nПояснение: {annotation}"
+    if not final_:
+        quest_type = None
+        if quest_type is not None:
+            txt += '\nТип вопроса: '
+            if quest_type == 'cat':
+                txt += 'Кот в мешке'
+            elif quest_type == 'risk':
+                txt += 'Вопрос без риска'
     try:
         bot.edit_message_text(chat_id=message.chat.id,
                               message_id=message.message_id, text=txt, reply_markup=markup)
