@@ -418,7 +418,7 @@ def SetQuestionType(chat_id, user_id, q_type, new_theme=None, new_cost=None):
         theme_tag.text = new_theme
         cost_tag = ET.SubElement(type_tag, 'param')
         cost_tag.set('name', 'cost')
-        cost_tag.text = new_cost
+        cost_tag.text = str(new_cost)
         self_tag = ET.SubElement(type_tag, 'param')
         self_tag.set('name', 'self')
         self_tag.text = 'false'

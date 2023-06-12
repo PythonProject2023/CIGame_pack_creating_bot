@@ -33,6 +33,7 @@ class MyStates(StatesGroup):
     question_question = State()
     question_annotation = State()
     question_cat_cost = State()
+    question_cat_theme = State()
 
 
 @bot.message_handler(commands=["start"])
@@ -1002,12 +1003,14 @@ def back_to_question_menu_callback_handler(call: CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data == "_question_type_common", state=MyStates.question_edit)
 def question_type_common_callback_handler(call: CallbackQuery):
     """Set question type to common."""
+    xml_parser.SetQuestionType(call.message.chat.id, call.from_user.id, 'usual')
     question_edit_handler(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_type_risk", state=MyStates.question_edit)
 def question_type_risk_callback_handler(call: CallbackQuery):
     """Set question type to no risk."""
+    xml_parser.SetQuestionType(call.message.chat.id, call.from_user.id, 'risk')
     question_edit_handler(call)
 
 
@@ -1026,14 +1029,25 @@ def question_type_cat_msg_handler(message: Message):
 
 @bot.message_handler(state=MyStates.question_cat_cost)
 def question_cat_cost_handler(message: Message):
-    """Edit cat question cost."""
-    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
+    """Save cat question cost."""
     try:
         price = xml_parser.CheckPrice(message.text)
-        xml_parser.SetQuestionPrice(message.chat.id, message.from_user.id, price)
+        bot.set_state(message.from_user.id, MyStates.question_cat_theme, message.chat.id)
+        bot.add_data(message.from_user.id, message.chat.id, cat_price=price)
+        bot.send_message(message.chat.id, "Введите тему вопроса:")
     except ValueError:
+        bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
         bot.send_message(message.chat.id, "Введите число")
         question_type_cat_msg_handler(message)
+
+
+@bot.message_handler(state=MyStates.question_cat_theme)
+def question_cat_theme_handler(message: Message):
+    """Edit cat question theme."""
+    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
+    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+        price_ = data["cat_price"]
+    xml_parser.SetQuestionType(message.chat.id, message.from_user.id, 'cat', message.text, price_)
     question_edit_msg_handler(message)
 
 
