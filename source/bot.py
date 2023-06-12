@@ -720,12 +720,13 @@ def question_edit_handler(call: CallbackQuery):
         txt += f"\nПояснение: {annotation}"
     if not final_:
         quest_type = xml_parser.GetQuestionType(call.message.chat.id, call.from_user.id)
+        print(quest_type)
         if quest_type['type'] != 'usual':
             txt += '\nТип вопроса: '
             if quest_type['type'] == 'cat':
                 real_cost = quest_type['cost']
                 real_theme = quest_type['theme']
-                txt += f'Кот в мешке {real_cost}\n Настоящая тема {real_theme}'
+                txt += f'Кот в мешке {real_cost}\nНастоящая тема {real_theme}'
             elif quest_type['type'] == 'risk':
                 txt += 'Вопрос без риска'
     try:
@@ -781,12 +782,13 @@ def question_edit_msg_handler(message: Message):
         txt += f"\nПояснение: {annotation}"
     if not final_:
         quest_type = xml_parser.GetQuestionType(message.chat.id, message.from_user.id)
+        print(quest_type)
         if quest_type['type'] != 'usual':
             txt += '\nТип вопроса: '
             if quest_type['type'] == 'cat':
                 real_cost = quest_type['cost']
                 real_theme = quest_type['theme']
-                txt += f'Кот в мешке {real_cost}\n Настоящая тема {real_theme}'
+                txt += f'Кот в мешке {real_cost}\nНастоящая тема {real_theme}'
             elif quest_type['type'] == 'risk':
                 txt += 'Вопрос без риска'
     try:

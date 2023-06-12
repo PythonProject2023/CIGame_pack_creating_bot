@@ -407,7 +407,7 @@ def SetQuestionType(chat_id, user_id, q_type, new_theme=None, new_cost=None):
         question.remove(old_type_tag)
     if q_type == 'usual':
         return
-    type_tag = ET.Element('atom')
+    type_tag = ET.Element('type')
     question.insert(0, type_tag)
     if q_type == 'risk':
         type_tag.set('name', 'sponsored')
@@ -446,7 +446,7 @@ def GetQuestionType(chat_id, user_id):
         f"round[@name='{round_name}']").find(
         'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
         f"question[@uuid='{question_uuid}']")
-    if question.get('type') is None:
+    if question.find('type') is None:
         return {'type': 'usual'}
     type_tag = question.find('type')
     if type_tag.get('name') == 'sponsored':
