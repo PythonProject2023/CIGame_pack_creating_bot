@@ -404,8 +404,13 @@ def round_edit_msg_handler(message: Message):
 @bot.callback_query_handler(func=lambda call: call.data == "back_to_edit_round_list", state=MyStates.round_edit)
 def back_round_list_callback_handler(call: CallbackQuery):
     """Back to selecting the round to edit."""
+    with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
+        final_ = data["final"]
     bot.set_state(call.from_user.id, MyStates.pack_edit, call.message.chat.id)
-    round_edit_list_callback_handler(call)
+    if final_:
+        round_final_edit_list_callback_handler(call)
+    else:
+        round_edit_list_callback_handler(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "theme_create", state=MyStates.round_edit)
