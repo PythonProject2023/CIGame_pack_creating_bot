@@ -670,11 +670,11 @@ def question_create_handler(message: Message):
     try:
         price = xml_parser.CheckPrice(message.text)
         xml_parser.CreateNewQuestion(message.chat.id, message.from_user.id, price)
+        bot.set_state(message.from_user.id, MyStates.theme_edit, message.chat.id)
+        theme_edit_msg_handler(message)
     except ValueError:
         bot.send_message(message.chat.id, _("Введите число", lang))
         question_create_msg_handler(message)
-    bot.set_state(message.from_user.id, MyStates.theme_edit, message.chat.id)
-    theme_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "question_delete", state=MyStates.theme_edit)
@@ -993,10 +993,10 @@ def question_cost_handler(message: Message):
     try:
         price = xml_parser.CheckPrice(message.text)
         xml_parser.SetQuestionPrice(message.chat.id, message.from_user.id, price)
+        question_edit_msg_handler(message)
     except ValueError:
         bot.send_message(message.chat.id, _("Введите число", lang))
         question_cost_msg_handler(message)
-    question_edit_msg_handler(message)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_answer", state=MyStates.question_edit)
