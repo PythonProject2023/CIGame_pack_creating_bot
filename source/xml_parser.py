@@ -358,7 +358,7 @@ def GetQuestionForm(chat_id, user_id):
 
     Returns (None, None) if there is no question,
     (text, 'text') if it is text or
-    (path_to_file, 'file' if it is video, voice or image.
+    (path_to_file, 'file') if it is video, voice or image.
     """
     rs = CreateRedisStorage()
     pack_name = rs.get_value(chat_id, user_id, 'pack')
