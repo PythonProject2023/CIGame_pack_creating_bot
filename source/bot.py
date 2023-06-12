@@ -32,6 +32,7 @@ class MyStates(StatesGroup):
     question_answer = State()
     question_question = State()
     question_annotation = State()
+    question_cat_cost = State()
 
 
 @bot.message_handler(commands=["start"])
@@ -785,7 +786,7 @@ def question_view_callback_handler(call: CallbackQuery):
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_annotation_delete", state=MyStates.question_edit)
-def question_annotation_callback_handler(call: CallbackQuery):
+def question_annotation_delete_callback_handler(call: CallbackQuery):
     """Delete the annotation of the question."""
     question_edit_handler(call)
 
@@ -806,7 +807,7 @@ def question_annotation_msg_handler(message: Message):
 
 
 @bot.message_handler(state=MyStates.question_annotation)
-def question_cost_handler(message: Message):
+def question_annotation_handler(message: Message):
     """Edit question annotation."""
     print(f"{message.chat.id} in question annotation 2")
     bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
@@ -973,8 +974,28 @@ def question_type_risk_callback_handler(call: CallbackQuery):
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_type_cat", state=MyStates.question_edit)
 def question_type_cat_callback_handler(call: CallbackQuery):
-    """Set question type to no risk and enter cost"""
-    question_edit_handler(call)
+    """Enter cost of cat question"""
+    bot.set_state(call.from_user.id, MyStates.question_cat_cost, call.message.chat.id)
+    bot.send_message(call.message.chat.id, "Введите стоимость вопроса:")
+
+
+def question_type_cat_msg_handler(message: Message):
+    """Enter cost of cat question"""
+    bot.set_state(message.from_user.id, MyStates.question_cat_cost, message.chat.id)
+    bot.send_message(message.chat.id, "Введите стоимость вопроса:")
+
+
+@bot.message_handler(state=MyStates.question_cat_cost)
+def question_cat_cost_handler(message: Message):
+    """Edit cat question cost."""
+    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
+    try:
+        price = xml_parser.CheckPrice(message.text)
+        xml_parser.SetQuestionPrice(message.chat.id, message.from_user.id, price)
+    except ValueError:
+        bot.send_message(message.chat.id, "Введите число")
+        question_cost_msg_handler(message)
+    question_type_cat_msg_handler(message)
 
 
 if __name__ == "__main__":
