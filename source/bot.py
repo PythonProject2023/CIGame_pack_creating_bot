@@ -143,7 +143,7 @@ def back_menu_callback_handler(call: CallbackQuery):
 def pack_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.pack_edit, call.message.chat.id)
     name = call.data[10:]
-    bot.add_data(call.from_user.id, call.message.chat.id, pack=name)
+    bot.add_data(call.from_user.id, call.message.chat.id, pack=name, final_round_exist=False)
     pack_edit_handler(call)
 
 
@@ -152,6 +152,7 @@ def pack_edit_handler(call: CallbackQuery):
     markup = quick_markup({
         "Создать финальный раунд": {"callback_data": "round_final_create"},
         "Создать раунд": {"callback_data": "round_create"},
+        "Редактировать финальный раунд": {"callback_data": "round_final_edit"},
         "Редактировать раунд": {"callback_data": "round_edit"},
         "Удалить раунд": {"callback_data": "round_delete"},
         "Назад": {"callback_data": "back_to_edit_pack_list"}
@@ -173,6 +174,7 @@ def pack_edit_msg_handler(message: Message):
     markup = quick_markup({
         "Создать финальный раунд": {"callback_data": "round_final_create"},
         "Создать раунд": {"callback_data": "round_create"},
+        "Редактировать финальный раунд": {"callback_data": "round_final_edit"},
         "Редактировать раунд": {"callback_data": "round_edit"},
         "Удалить раунд": {"callback_data": "round_delete"},
         "Назад": {"callback_data": "back_to_edit_pack_list"}
@@ -214,16 +216,22 @@ def round_create_handler(message: Message):
 @bot.callback_query_handler(func=lambda call: call.data == "round_final_create", state=MyStates.pack_edit)
 def round_final_create_callback_handler(call: CallbackQuery):
     print(f"{call.message.chat.id} in final round create 1")
-    bot.set_state(call.from_user.id, MyStates.round_final_create, call.message.chat.id)
-    bot.send_message(call.message.chat.id, "Введите название раунда:")
+    with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
+        exist_ = data["final_round_exist"]
+    if exist_:
+        bot.send_message(call.message.chat.id, "Финальный раунд уже существует, сначала удалите старый")
+        pack_edit_handler(call)
+    else:
+        bot.set_state(call.from_user.id, MyStates.round_final_create, call.message.chat.id)
+        bot.send_message(call.message.chat.id, "Введите название финального раунда:")
 
 
 @bot.message_handler(state=MyStates.round_final_create)
 def round_final_create_handler(message: Message):
     print(f"{message.chat.id} in final round create 2")
     bot.set_state(message.from_user.id, MyStates.pack_edit, message.chat.id)
-    bot.add_data(message.from_user.id, message.chat.id, round=message.text)
     xml_parser.CreateNewRound(message.chat.id, message.from_user.id, message.text, final=True)
+    bot.add_data(message.from_user.id, message.chat.id, final_round_exist=True)
     pack_edit_msg_handler(message)
 
 
@@ -241,11 +249,21 @@ def round_delete_callback_handler(call: CallbackQuery):
                           text="Нажмите, чтобы удалить", reply_markup=markup)
 
 
+@bot.callback_query_handler(func=lambda call: call.data == "round_final_edit", state=MyStates.pack_edit)
+def round_final_edit_list_callback_handler(call: CallbackQuery):
+    list_of_rounds = xml_parser.GetRounds(call.message.chat.id, call.from_user.id, final=True)
+    markup = InlineKeyboardMarkup(row_width=1)
+    for i in list_of_rounds:
+        markup.add(InlineKeyboardButton(i, callback_data=f"edit_round_f_{i}"))
+    markup.add(InlineKeyboardButton("Назад", callback_data="back_to_pack_edit_menu"))
+    bot.edit_message_text(chat_id=call.message.chat.id,
+                          message_id=call.message.message_id,
+                          text="Нажмите, чтобы редактировать", reply_markup=markup)
+
+
 @bot.callback_query_handler(func=lambda call: call.data == "round_edit", state=MyStates.pack_edit)
 def round_edit_list_callback_handler(call: CallbackQuery):
-    list_of_rounds = xml_parser.GetRounds(call.message.chat.id,
-                                          call.from_user.id) + xml_parser.GetRounds(call.message.chat.id,
-                                                                                    call.from_user.id, final=True)
+    list_of_rounds = xml_parser.GetRounds(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
     for i in list_of_rounds:
         markup.add(InlineKeyboardButton(i, callback_data=f"edit_round_{i}"))
@@ -267,11 +285,19 @@ def round_delete_callback_handler(call: CallbackQuery):
     pack_edit_handler(call)
 
 
+@bot.callback_query_handler(func=lambda call: call.data.startswith("edit_round_f_"), state=MyStates.pack_edit)
+def round_final_edit_callback_handler(call: CallbackQuery):
+    bot.set_state(call.from_user.id, MyStates.round_edit, call.message.chat.id)
+    name = call.data[13:]
+    bot.add_data(call.from_user.id, call.message.chat.id, round=name, final=True)
+    round_edit_handler(call)
+
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith("edit_round_"), state=MyStates.pack_edit)
 def round_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.round_edit, call.message.chat.id)
     name = call.data[11:]
-    bot.add_data(call.from_user.id, call.message.chat.id, round=name)
+    bot.add_data(call.from_user.id, call.message.chat.id, round=name, final=False)
     round_edit_handler(call)
 
 
@@ -286,7 +312,11 @@ def round_edit_handler(call: CallbackQuery):
     with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
         pack_ = data["pack"]
         round_ = data["round"]
-    txt = f"Меню\n\nПак {pack_}\nРаунд {round_}"
+        final_ = data["final"]
+    if final_:
+        txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}"
+    else:
+        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}"
     try:
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id, text=txt, reply_markup=markup)
@@ -306,7 +336,11 @@ def round_edit_msg_handler(message: Message):
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         pack_ = data["pack"]
         round_ = data["round"]
-    txt = f"Меню\n\nПак {pack_}\nРаунд {round_}"
+        final_ = data["final"]
+    if final_:
+        txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}"
+    else:
+        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}"
     try:
         bot.edit_message_text(chat_id=message.chat.id,
                               message_id=message.message_id, text=txt, reply_markup=markup)
@@ -378,7 +412,7 @@ def theme_delete_callback_handler(call: CallbackQuery):
 def theme_edit_callback_handler(call: CallbackQuery):
     bot.set_state(call.from_user.id, MyStates.theme_edit, call.message.chat.id)
     name = call.data[11:]
-    bot.add_data(call.from_user.id, call.message.chat.id, theme=name)
+    bot.add_data(call.from_user.id, call.message.chat.id, theme=name, final_quest_exist=False)
     theme_edit_handler(call)
 
 
@@ -394,7 +428,11 @@ def theme_edit_handler(call: CallbackQuery):
         pack_ = data["pack"]
         round_ = data["round"]
         theme_ = data["theme"]
-    txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}"
+        final_ = data["final"]
+    if final_:
+        txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}"
+    else:
+        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}"
     try:
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id, text=txt, reply_markup=markup)
@@ -415,7 +453,11 @@ def theme_edit_msg_handler(message: Message):
         pack_ = data["pack"]
         round_ = data["round"]
         theme_ = data["theme"]
-    txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}"
+        final_ = data["final"]
+    if final_:
+        txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}"
+    else:
+        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}"
     try:
         bot.edit_message_text(chat_id=message.chat.id,
                               message_id=message.message_id, text=txt, reply_markup=markup)
@@ -434,14 +476,34 @@ def back_menu_theme_callback_handler(call: CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data == "question_create", state=MyStates.theme_edit)
 def question_create_callback_handler(call: CallbackQuery):
     print(f"{call.message.chat.id} in question create 1")
-    bot.set_state(call.from_user.id, MyStates.question_create, call.message.chat.id)
-    bot.send_message(call.message.chat.id, "Введите стоимость вопроса:")
+    with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
+        final_ = data["final"]
+        exist_ = data["final_quest_exist"]
+    if final_ and exist_:
+        bot.send_message(call.message.chat.id, "Вопрос в теме финального раунда уже существует, сначала удалите старый")
+        theme_edit_handler(call)
+    elif final_:
+        xml_parser.CreateNewQuestion(call.message.chat.id, call.from_user.id, 0)
+        bot.add_data(call.from_user.id, call.message.chat.id, final_quest_exist=True)
+    else:
+        bot.set_state(call.from_user.id, MyStates.question_create, call.message.chat.id)
+        bot.send_message(call.message.chat.id, "Введите стоимость вопроса:")
 
 
 def question_create_msg_handler(message: Message):
     print(f"{message.chat.id} in question create 1")
-    bot.set_state(message.from_user.id, MyStates.question_create, message.chat.id)
-    bot.send_message(message.chat.id, "Введите стоимость вопроса:")
+    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+        final_ = data["final"]
+        exist_ = data["final_quest_exist"]
+    if final_ and exist_:
+        bot.send_message(message.chat.id, "Вопрос в теме финального раунда уже существует, сначала удалите старый")
+        theme_edit_msg_handler(message)
+    elif final_:
+        xml_parser.CreateNewQuestion(message.chat.id, message.from_user.id, 0)
+        bot.add_data(message.from_user.id, message.chat.id, final_quest_exist=True)
+    else:
+        bot.set_state(message.from_user.id, MyStates.question_create, message.chat.id)
+        bot.send_message(message.chat.id, "Введите стоимость вопроса:")
 
 
 @bot.message_handler(state=MyStates.question_create)
@@ -461,8 +523,15 @@ def question_create_handler(message: Message):
 def question_delete_callback_handler(call: CallbackQuery):
     dict_of_questions = xml_parser.GetQuestions(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
-    for i, value in enumerate(dict_of_questions, start=1):
-        markup.add(InlineKeyboardButton(f"{i}. {value[1]}", callback_data=f"delete_question_{value[0]}"))
+    with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
+        final_ = data["final"]
+        exist_ = data["final_quest_exist"]
+    if final_ and exist_:
+        for value in dict_of_questions:
+            markup.add(InlineKeyboardButton(f"Финальный вопрос", callback_data=f"delete_question_{value[0]}"))
+    else:
+        for i, value in enumerate(dict_of_questions, start=1):
+            markup.add(InlineKeyboardButton(f"{i}. {value[1]}", callback_data=f"delete_question_{value[0]}"))
     markup.add(InlineKeyboardButton("Назад", callback_data="back_to_theme_edit_menu"))
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
@@ -473,8 +542,15 @@ def question_delete_callback_handler(call: CallbackQuery):
 def question_edit_list_callback_handler(call: CallbackQuery):
     dict_of_questions = xml_parser.GetQuestions(call.message.chat.id, call.from_user.id)
     markup = InlineKeyboardMarkup(row_width=1)
-    for i, value in enumerate(dict_of_questions, start=1):
-        markup.add(InlineKeyboardButton(f"{i}. {value[1]}", callback_data=f"edit_question_{value[0]}"))
+    with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
+        final_ = data["final"]
+        exist_ = data["final_quest_exist"]
+    if final_ and exist_:
+        for value in dict_of_questions:
+            markup.add(InlineKeyboardButton(f"Финальный вопрос", callback_data=f"edit_question_{value[0]}"))
+    else:
+        for i, value in enumerate(dict_of_questions, start=1):
+            markup.add(InlineKeyboardButton(f"{i}. {value[1]}", callback_data=f"edit_question_{value[0]}"))
     markup.add(InlineKeyboardButton("Назад", callback_data="back_to_theme_edit_menu"))
     bot.edit_message_text(chat_id=call.message.chat.id,
                           message_id=call.message.message_id,
@@ -489,6 +565,10 @@ def back_menu_question_callback_handler(call: CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data.startswith("delete_question_"), state=MyStates.theme_edit)
 def question_delete_callback_handler(call: CallbackQuery):
     uid = call.data[13:]
+    with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
+        final_ = data["final"]
+    if final_:
+        bot.add_data(call.from_user.id, call.message.chat.id, final_quest_exist=False)
     xml_parser.DeleteQuestion(call.message.chat.id, call.from_user.id, uid)
     theme_edit_handler(call)
 
@@ -503,22 +583,36 @@ def question_edit_callback_handler(call: CallbackQuery):
 
 # @bot.message_handler(state=MyStates.question_edit)
 def question_edit_handler(call: CallbackQuery):
-    markup = quick_markup({
-        "Редактировать стоимость": {"callback_data": "_question_cost"},
-        "Редактировать ответ": {"callback_data": "_question_answer"},
-        "Редактировать вопрос": {"callback_data": "_question_question"},
-        "Назад": {"callback_data": "back_to_edit_question_list"}
-    }, row_width=1)
     with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
         pack_ = data["pack"]
         round_ = data["round"]
         theme_ = data["theme"]
-    cost = xml_parser.GetQuestionPrice(call.message.chat.id, call.from_user.id)
-    ans = xml_parser.GetQuestionAnswer(call.message.chat.id, call.from_user.id)
-    if ans is None:
-        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
+        final_ = data["final"]
+    if final_:
+        markup = quick_markup({
+            "Редактировать ответ": {"callback_data": "_question_answer"},
+            "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Назад": {"callback_data": "back_to_edit_question_list"}
+        }, row_width=1)
     else:
-        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
+        markup = quick_markup({
+            "Редактировать стоимость": {"callback_data": "_question_cost"},
+            "Редактировать ответ": {"callback_data": "_question_answer"},
+            "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Назад": {"callback_data": "back_to_edit_question_list"}
+        }, row_width=1)
+    ans = xml_parser.GetQuestionAnswer(call.message.chat.id, call.from_user.id)
+    if final_:
+        if ans is None:
+            txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса"
+        else:
+            txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса\nОтвет: {ans}"
+    else:
+        cost = xml_parser.GetQuestionPrice(call.message.chat.id, call.from_user.id)
+        if ans is None:
+            txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
+        else:
+            txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
     try:
         bot.edit_message_text(chat_id=call.message.chat.id,
                               message_id=call.message.message_id, text=txt, reply_markup=markup)
@@ -529,22 +623,36 @@ def question_edit_handler(call: CallbackQuery):
 
 
 def question_edit_msg_handler(message: Message):
-    markup = quick_markup({
-        "Редактировать стоимость": {"callback_data": "_question_cost"},
-        "Редактировать ответ": {"callback_data": "_question_answer"},
-        "Редактировать вопрос": {"callback_data": "_question_question"},
-        "Назад": {"callback_data": "back_to_edit_question_list"}
-    }, row_width=1)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
         pack_ = data["pack"]
         round_ = data["round"]
         theme_ = data["theme"]
-    cost = xml_parser.GetQuestionPrice(message.chat.id, message.from_user.id)
-    ans = xml_parser.GetQuestionAnswer(message.chat.id, message.from_user.id)
-    if ans is None:
-        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
+        final_ = data["final"]
+    if final_:
+        markup = quick_markup({
+            "Редактировать ответ": {"callback_data": "_question_answer"},
+            "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Назад": {"callback_data": "back_to_edit_question_list"}
+        }, row_width=1)
     else:
-        txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
+        markup = quick_markup({
+            "Редактировать стоимость": {"callback_data": "_question_cost"},
+            "Редактировать ответ": {"callback_data": "_question_answer"},
+            "Редактировать вопрос": {"callback_data": "_question_question"},
+            "Назад": {"callback_data": "back_to_edit_question_list"}
+        }, row_width=1)
+    ans = xml_parser.GetQuestionAnswer(message.chat.id, message.from_user.id)
+    if final_:
+        if ans is None:
+            txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса"
+        else:
+            txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса\nОтвет: {ans}"
+    else:
+        cost = xml_parser.GetQuestionPrice(message.chat.id, message.from_user.id)
+        if ans is None:
+            txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}"
+        else:
+            txt = f"Меню\n\nПак {pack_}\nРаунд {round_}\nТема {theme_}\nРедактирование вопроса {cost}\nОтвет: {ans}"
     try:
         bot.edit_message_text(chat_id=message.chat.id,
                               message_id=message.message_id, text=txt, reply_markup=markup)
