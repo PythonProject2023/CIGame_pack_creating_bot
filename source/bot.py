@@ -749,7 +749,7 @@ def file_handler(message: Message):
         xml_parser.SetQuestionFile(message.chat.id,
                                    message.from_user.id,
                                    f"../packs/{message.chat.id}/{pack_}/.files/" + message.photo[1].file_id + ".png",
-                                   "photo")
+                                   "image")
     elif message.content_type == 'audio':
         file_info = bot.get_file(message.audio.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
@@ -785,7 +785,7 @@ def file_handler(message: Message):
         xml_parser.SetQuestionFile(message.chat.id,
                                    message.from_user.id,
                                    f"../packs/{message.chat.id}/{pack_}/.files/" + message.video.file_id + ".mp4",
-                                   "audio")
+                                   "video")
     elif message.content_type == 'video_note':
         file_info = bot.get_file(message.video_note.file_id)
         downloaded_file = bot.download_file(file_info.file_path)
@@ -797,7 +797,7 @@ def file_handler(message: Message):
         xml_parser.SetQuestionFile(message.chat.id,
                                    message.from_user.id,
                                    f"../packs/{message.chat.id}/{pack_}/.files/" + message.video_note.file_id + ".mp4",
-                                   "audio")
+                                   "video")
     elif message.content_type == 'text':
         xml_parser.SetQuestionText(message.chat.id, message.from_user.id, message.text)
     bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
