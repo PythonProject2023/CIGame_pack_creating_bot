@@ -81,10 +81,14 @@ def CreateNewRound(chat_id, user_id, round_name, final=False):
 
 def DeleteRound(chat_id, user_id, round_name):
     """Delete a round by name."""
-    pack_name = CreateRedisStorage().get_value(chat_id, user_id, 'pack')
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
     tree, root = GetFileTree(user_id, pack_name)
     rounds = root.find('rounds')
     round_to_delete = rounds.find(f"./round[@name='{round_name}']")
+    rs.set_data(chat_id, user_id, 'round', round_name)
+    for theme in GetThemes(chat_id, user_id):
+        DeleteTheme(chat_id, user_id, theme)
     rounds.remove(round_to_delete)
     SaveXMLFile(user_id, pack_name, tree)
 
@@ -126,6 +130,9 @@ def DeleteTheme(chat_id, user_id, theme_name):
     themes = root.find('rounds').find(f"round[@name='{round_name}']").find(
         'themes')
     theme_to_delete = themes.find(f"theme[@name='{theme_name}']")
+    rs.set_data(chat_id, user_id, 'theme', theme_name)
+    for q_info in GetQuestions(chat_id, user_id):
+        DeleteQuestion(chat_id, user_id, q_info[0])
     themes.remove(theme_to_delete)
     SaveXMLFile(user_id, pack_name, tree)
 
@@ -182,6 +189,17 @@ def DeleteQuestion(chat_id, user_id, q_uuid):
         f"round[@name='{round_name}']").find(
         'themes').find(f"theme[@name='{theme_name}']").find('questions')
     question = questions.find(f"question[@uuid='{q_uuid}']")
+    pack_dir = os.path.join(packs_directory, str(user_id), pack_name)
+    for atom in question.find('scenario').findall('atom'):
+        if atom.get('type') == 'image':
+            image_name = atom.text[1:]
+            os.remove(os.path.join(pack_dir, 'Images', image_name))
+        if atom.get('type') == 'voice':
+            voice_name = atom.text[1:]
+            os.remove(os.path.join(pack_dir, 'Audio', voice_name))
+        if atom.get('type') == 'video':
+            video_name = atom.text[1:]
+            os.remove(os.path.join(pack_dir, 'Video', video_name))
     questions.remove(question)
     SaveXMLFile(user_id, pack_name, tree)
 
