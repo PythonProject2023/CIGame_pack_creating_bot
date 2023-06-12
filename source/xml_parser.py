@@ -413,6 +413,7 @@ def SetQuestionType(chat_id, user_id, q_type, new_theme=None, new_cost=None):
     if old_type_tag is not None:
         question.remove(old_type_tag)
     if q_type == 'usual':
+        SaveXMLFile(user_id, pack_name, tree)
         return
     type_tag = ET.Element('type')
     question.insert(0, type_tag)
