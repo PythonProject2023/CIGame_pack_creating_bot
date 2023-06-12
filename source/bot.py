@@ -941,5 +941,41 @@ def file_handler(message: Message):
     question_edit_msg_handler(message)
 
 
+@bot.callback_query_handler(func=lambda call: call.data == "_question_type", state=MyStates.question_edit)
+def question_type_list_callback_handler(call: CallbackQuery):
+    """Create buttons with types of question."""
+    markup = quick_markup({
+        "Обычный вопрос": {"callback_data": "_question_type_common"},
+        "Кот в мешке": {"callback_data": "_question_type_cat"},
+        "Вопрос без риска": {"callback_data": "_question_type_risk"},
+        "Назад": {"callback_data": "back_to_question_menu"}
+    }, row_width=1)
+    bot.send_message(call.message.chat.id, "Выберите тип", reply_markup=markup)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "back_to_question_menu", state=MyStates.question_edit)
+def back_to_question_menu_callback_handler(call: CallbackQuery):
+    """Back to question menu."""
+    question_edit_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_type_common", state=MyStates.question_edit)
+def question_type_common_callback_handler(call: CallbackQuery):
+    """Set question type to common"""
+    question_edit_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_type_risk", state=MyStates.question_edit)
+def question_type_risk_callback_handler(call: CallbackQuery):
+    """Set question type to no risk"""
+    question_edit_handler(call)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == "_question_type_cat", state=MyStates.question_edit)
+def question_type_cat_callback_handler(call: CallbackQuery):
+    """Set question type to no risk and enter cost"""
+    question_edit_handler(call)
+
+
 if __name__ == "__main__":
     bot.infinity_polling()
