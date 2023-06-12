@@ -383,13 +383,9 @@ def GetQuestionForm(chat_id, user_id):
                 folders_names = {'image': 'Images',
                                  'voice': 'Audio',
                                  'video': 'Video'}
-                file_format = {'image': '.png',
-                               'voice': '.ogg',
-                               'video': '.mp4'}
                 res = os.path.join(packs_directory, str(user_id),
                                    pack_name, folders_names[atom.get('type')],
-                                   atom.text[1:],
-                                   file_format[atom.get('type')])
+                                   atom.text[1:])
     return (res, q_type)
 
 
@@ -411,7 +407,7 @@ def SetQuestionType(chat_id, user_id, q_type, new_theme=None, new_cost=None):
         question.remove(old_type_tag)
     if q_type == 'usual':
         return
-    type_tag = ET.Element('atom')
+    type_tag = ET.Element('type')
     question.insert(0, type_tag)
     if q_type == 'risk':
         type_tag.set('name', 'sponsored')
@@ -422,7 +418,7 @@ def SetQuestionType(chat_id, user_id, q_type, new_theme=None, new_cost=None):
         theme_tag.text = new_theme
         cost_tag = ET.SubElement(type_tag, 'param')
         cost_tag.set('name', 'cost')
-        cost_tag.text = new_cost
+        cost_tag.text = str(new_cost)
         self_tag = ET.SubElement(type_tag, 'param')
         self_tag.set('name', 'self')
         self_tag.text = 'false'
@@ -450,7 +446,7 @@ def GetQuestionType(chat_id, user_id):
         f"round[@name='{round_name}']").find(
         'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
         f"question[@uuid='{question_uuid}']")
-    if question.get('type') is None:
+    if question.find('type') is None:
         return {'type': 'usual'}
     type_tag = question.find('type')
     if type_tag.get('name') == 'sponsored':

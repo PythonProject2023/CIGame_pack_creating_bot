@@ -33,6 +33,7 @@ class MyStates(StatesGroup):
     question_question = State()
     question_annotation = State()
     question_cat_cost = State()
+    question_cat_theme = State()
 
 
 @bot.message_handler(commands=["start"])
@@ -703,7 +704,7 @@ def question_edit_handler(call: CallbackQuery):
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     ans = xml_parser.GetQuestionAnswer(call.message.chat.id, call.from_user.id)
-    annotation = None
+    annotation = xml_parser.GetQuestionComment(call.message.chat.id, call.from_user.id)
     if final_:
         if ans is None:
             txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса"
@@ -718,13 +719,15 @@ def question_edit_handler(call: CallbackQuery):
     if annotation is not None:
         txt += f"\nПояснение: {annotation}"
     if not final_:
-        quest_type = None
-        if quest_type is not None:
+        quest_type = xml_parser.GetQuestionType(call.message.chat.id, call.from_user.id)
+        print(quest_type)
+        if quest_type['type'] != 'usual':
             txt += '\nТип вопроса: '
-            if quest_type == 'cat':
-                real_cost = ""
-                txt += f'Кот в мешке {real_cost}'
-            elif quest_type == 'risk':
+            if quest_type['type'] == 'cat':
+                real_cost = quest_type['cost']
+                real_theme = quest_type['theme']
+                txt += f'Кот в мешке {real_cost}\nНастоящая тема {real_theme}'
+            elif quest_type['type'] == 'risk':
                 txt += 'Вопрос без риска'
     try:
         bot.edit_message_text(chat_id=call.message.chat.id,
@@ -763,7 +766,7 @@ def question_edit_msg_handler(message: Message):
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     ans = xml_parser.GetQuestionAnswer(message.chat.id, message.from_user.id)
-    annotation = None
+    annotation = xml_parser.GetQuestionComment(message.chat.id, message.from_user.id)
     if final_:
         if ans is None:
             txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса"
@@ -778,13 +781,15 @@ def question_edit_msg_handler(message: Message):
     if annotation is not None:
         txt += f"\nПояснение: {annotation}"
     if not final_:
-        quest_type = None
-        if quest_type is not None:
+        quest_type = xml_parser.GetQuestionType(message.chat.id, message.from_user.id)
+        print(quest_type)
+        if quest_type['type'] != 'usual':
             txt += '\nТип вопроса: '
-            if quest_type == 'cat':
-                real_cost = ""
-                txt += f'Кот в мешке {real_cost}'
-            elif quest_type == 'risk':
+            if quest_type['type'] == 'cat':
+                real_cost = quest_type['cost']
+                real_theme = quest_type['theme']
+                txt += f'Кот в мешке {real_cost}\nНастоящая тема {real_theme}'
+            elif quest_type['type'] == 'risk':
                 txt += 'Вопрос без риска'
     try:
         bot.edit_message_text(chat_id=message.chat.id,
@@ -805,12 +810,24 @@ def back_question_list_callback_handler(call: CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data == "_question_view", state=MyStates.question_edit)
 def question_view_callback_handler(call: CallbackQuery):
     """View the question."""
+    obj, type_obj = xml_parser.GetQuestionForm(call.message.chat.id, call.from_user.id)
+    if type_obj == "text":
+        bot.send_message(call.message.chat.id, obj)
+    elif type_obj == "file":
+        file = open(obj, 'rb')
+        if obj[-3:] == "png":
+            bot.send_photo(call.message.chat.id, file)
+        elif obj[-3:] == "ogg":
+            bot.send_audio(call.message.chat.id, file)
+        elif obj[-3:] == "mp4":
+            bot.send_video(call.message.chat.id, file)
     question_edit_handler(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_annotation_delete", state=MyStates.question_edit)
 def question_annotation_delete_callback_handler(call: CallbackQuery):
     """Delete the annotation of the question."""
+    xml_parser.DeleteQuestionComment(call.message.chat.id, call.from_user.id)
     question_edit_handler(call)
 
 
@@ -833,6 +850,7 @@ def question_annotation_msg_handler(message: Message):
 def question_annotation_handler(message: Message):
     """Edit question annotation."""
     print(f"{message.chat.id} in question annotation 2")
+    xml_parser.SetQuestionComment(message.chat.id, message.from_user.id, message.text)
     bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
     question_edit_msg_handler(message)
 
@@ -987,12 +1005,14 @@ def back_to_question_menu_callback_handler(call: CallbackQuery):
 @bot.callback_query_handler(func=lambda call: call.data == "_question_type_common", state=MyStates.question_edit)
 def question_type_common_callback_handler(call: CallbackQuery):
     """Set question type to common."""
+    xml_parser.SetQuestionType(call.message.chat.id, call.from_user.id, 'usual')
     question_edit_handler(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_type_risk", state=MyStates.question_edit)
 def question_type_risk_callback_handler(call: CallbackQuery):
     """Set question type to no risk."""
+    xml_parser.SetQuestionType(call.message.chat.id, call.from_user.id, 'risk')
     question_edit_handler(call)
 
 
@@ -1011,14 +1031,25 @@ def question_type_cat_msg_handler(message: Message):
 
 @bot.message_handler(state=MyStates.question_cat_cost)
 def question_cat_cost_handler(message: Message):
-    """Edit cat question cost."""
-    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
+    """Save cat question cost."""
     try:
         price = xml_parser.CheckPrice(message.text)
-        xml_parser.SetQuestionPrice(message.chat.id, message.from_user.id, price)
+        bot.set_state(message.from_user.id, MyStates.question_cat_theme, message.chat.id)
+        bot.add_data(message.from_user.id, message.chat.id, cat_price=price)
+        bot.send_message(message.chat.id, "Введите тему вопроса:")
     except ValueError:
+        bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
         bot.send_message(message.chat.id, "Введите число")
         question_type_cat_msg_handler(message)
+
+
+@bot.message_handler(state=MyStates.question_cat_theme)
+def question_cat_theme_handler(message: Message):
+    """Edit cat question theme."""
+    bot.set_state(message.from_user.id, MyStates.question_edit, message.chat.id)
+    with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
+        price_ = data["cat_price"]
+    xml_parser.SetQuestionType(message.chat.id, message.from_user.id, 'cat', message.text, price_)
     question_edit_msg_handler(message)
 
 
