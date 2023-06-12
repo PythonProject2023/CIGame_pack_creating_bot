@@ -62,7 +62,9 @@ def DeletePack(chat_id, user_id, pack_name):
 
 def GetUserPacks(chat_id, user_id):
     """Get all the user packs names."""
-    return os.listdir(os.path.join(packs_directory, str(user_id)))
+    dir_content = os.listdir(os.path.join(packs_directory, str(user_id)))
+    return [p for p in dir_content if
+            os.path.isdir(os.path.join(packs_directory, str(user_id), p))]
 
 
 def CreateNewRound(chat_id, user_id, round_name, final=False):
