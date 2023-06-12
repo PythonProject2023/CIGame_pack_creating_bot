@@ -492,6 +492,23 @@ def GetQuestionComment(chat_id, user_id):
     return scenario.find("atom[@type='say']").text
 
 
+def DeleteQuestionComment(chat_id, user_id):
+    """Delete question comment."""
+    rs = CreateRedisStorage()
+    pack_name = rs.get_value(chat_id, user_id, 'pack')
+    tree, root = GetFileTree(user_id, pack_name)
+    round_name = rs.get_value(chat_id, user_id, 'round')
+    theme_name = rs.get_value(chat_id, user_id, 'theme')
+    question_uuid = rs.get_value(chat_id, user_id, 'question')
+    scenario = root.find('rounds').find(
+        f"round[@name='{round_name}']").find(
+        'themes').find(f"theme[@name='{theme_name}']").find('questions').find(
+        f"question[@uuid='{question_uuid}']").find('scenario')
+    if scenario.find("atom[@type='say']") is not None:
+        scenario.remove(scenario.find("atom[@type='say']"))
+    SaveXMLFile(user_id, pack_name, tree)
+
+
 def LoadPackToSiq(chat_id, user_id, pack_name):
     """Load pack to .siq format and return path to it."""
     path_to_user_dir = os.path.join(packs_directory, str(user_id))
