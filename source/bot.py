@@ -994,8 +994,8 @@ def question_cat_cost_handler(message: Message):
         xml_parser.SetQuestionPrice(message.chat.id, message.from_user.id, price)
     except ValueError:
         bot.send_message(message.chat.id, "Введите число")
-        question_cost_msg_handler(message)
-    question_type_cat_msg_handler(message)
+        question_type_cat_msg_handler(message)
+    question_edit_msg_handler(message)
 
 
 if __name__ == "__main__":
