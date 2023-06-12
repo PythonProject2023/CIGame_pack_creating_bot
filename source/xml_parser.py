@@ -383,13 +383,9 @@ def GetQuestionForm(chat_id, user_id):
                 folders_names = {'image': 'Images',
                                  'voice': 'Audio',
                                  'video': 'Video'}
-                file_format = {'image': '.png',
-                               'voice': '.ogg',
-                               'video': '.mp4'}
                 res = os.path.join(packs_directory, str(user_id),
                                    pack_name, folders_names[atom.get('type')],
-                                   atom.text[1:],
-                                   file_format[atom.get('type')])
+                                   atom.text[1:])
     return (res, q_type)
 
 

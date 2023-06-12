@@ -703,7 +703,7 @@ def question_edit_handler(call: CallbackQuery):
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     ans = xml_parser.GetQuestionAnswer(call.message.chat.id, call.from_user.id)
-    annotation = None
+    annotation = xml_parser.GetQuestionComment(call.message.chat.id, call.from_user.id)
     if final_:
         if ans is None:
             txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса"
@@ -718,13 +718,14 @@ def question_edit_handler(call: CallbackQuery):
     if annotation is not None:
         txt += f"\nПояснение: {annotation}"
     if not final_:
-        quest_type = None
-        if quest_type is not None:
+        quest_type = xml_parser.GetQuestionType(call.message.chat.id, call.from_user.id)
+        if quest_type['type'] != 'usual':
             txt += '\nТип вопроса: '
-            if quest_type == 'cat':
-                real_cost = ""
-                txt += f'Кот в мешке {real_cost}'
-            elif quest_type == 'risk':
+            if quest_type['type'] == 'cat':
+                real_cost = quest_type['cost']
+                real_theme = quest_type['theme']
+                txt += f'Кот в мешке {real_cost}\n Настоящая тема {real_theme}'
+            elif quest_type['type'] == 'risk':
                 txt += 'Вопрос без риска'
     try:
         bot.edit_message_text(chat_id=call.message.chat.id,
@@ -763,7 +764,7 @@ def question_edit_msg_handler(message: Message):
             "Назад": {"callback_data": "back_to_edit_question_list"}
         }, row_width=1)
     ans = xml_parser.GetQuestionAnswer(message.chat.id, message.from_user.id)
-    annotation = None
+    annotation = xml_parser.GetQuestionComment(message.chat.id, message.from_user.id)
     if final_:
         if ans is None:
             txt = f"Меню\n\nПак {pack_}\nФинальный раунд {round_}\nТема {theme_}\nРедактирование вопроса"
@@ -778,13 +779,14 @@ def question_edit_msg_handler(message: Message):
     if annotation is not None:
         txt += f"\nПояснение: {annotation}"
     if not final_:
-        quest_type = None
-        if quest_type is not None:
+        quest_type = xml_parser.GetQuestionType(message.chat.id, message.from_user.id)
+        if quest_type['type'] != 'usual':
             txt += '\nТип вопроса: '
-            if quest_type == 'cat':
-                real_cost = ""
-                txt += f'Кот в мешке {real_cost}'
-            elif quest_type == 'risk':
+            if quest_type['type'] == 'cat':
+                real_cost = quest_type['cost']
+                real_theme = quest_type['theme']
+                txt += f'Кот в мешке {real_cost}\n Настоящая тема {real_theme}'
+            elif quest_type['type'] == 'risk':
                 txt += 'Вопрос без риска'
     try:
         bot.edit_message_text(chat_id=message.chat.id,
@@ -810,12 +812,19 @@ def question_view_callback_handler(call: CallbackQuery):
         bot.send_message(call.message.chat.id, obj)
     elif type_obj == "file":
         file = open(obj, 'rb')
+        if obj[-3:] == "png":
+            bot.send_photo(call.message.chat.id, file)
+        elif obj[-3:] == "ogg":
+            bot.send_audio(call.message.chat.id, file)
+        elif obj[-3:] == "mp4":
+            bot.send_video(call.message.chat.id, file)
     question_edit_handler(call)
 
 
 @bot.callback_query_handler(func=lambda call: call.data == "_question_annotation_delete", state=MyStates.question_edit)
 def question_annotation_delete_callback_handler(call: CallbackQuery):
     """Delete the annotation of the question."""
+    xml_parser.DeleteQuestionComment(call.message.chat.id, call.from_user.id)
     question_edit_handler(call)
 
 
