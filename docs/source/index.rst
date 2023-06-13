@@ -23,7 +23,7 @@ Welcome to SIGame_pack_creating_bot's documentation!
 ..
 
    - У вас должен быть установлен Redis-server версии >= 4.4 и быть включен на порту 6379
-   - Выполните команды doit l10n, doit runbot
+   - Выполните команду doit runbot
    - Вы прекрасны
 
 .. toctree::
