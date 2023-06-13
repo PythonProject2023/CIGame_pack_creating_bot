@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2023-06-13 01:22+0300\n"
+"POT-Creation-Date: 2023-06-13 02:31+0300\n"
 "PO-Revision-Date: 2023-06-12 23:43+0300\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -40,8 +40,8 @@ msgstr "Change language"
 
 #: bot.py:71 bot.py:75 bot.py:92 bot.py:96 bot.py:202 bot.py:244 bot.py:268
 #: bot.py:424 bot.py:427 bot.py:451 bot.py:454 bot.py:567 bot.py:570 bot.py:596
-#: bot.py:599 bot.py:790 bot.py:794 bot.py:801 bot.py:806 bot.py:866 bot.py:870
-#: bot.py:877 bot.py:882
+#: bot.py:599 bot.py:790 bot.py:794 bot.py:801 bot.py:806 bot.py:865 bot.py:869
+#: bot.py:876 bot.py:881
 msgid "Меню"
 msgstr "Menu"
 
@@ -55,8 +55,8 @@ msgstr "Enter pack name:"
 
 #: bot.py:153 bot.py:160 bot.py:175 bot.py:242 bot.py:266 bot.py:341 bot.py:356
 #: bot.py:371 bot.py:421 bot.py:448 bot.py:505 bot.py:520 bot.py:564 bot.py:593
-#: bot.py:699 bot.py:724 bot.py:773 bot.py:784 bot.py:849 bot.py:860
-#: bot.py:1117
+#: bot.py:699 bot.py:724 bot.py:773 bot.py:784 bot.py:848 bot.py:859
+#: bot.py:1115
 msgid "Назад"
 msgstr "Back"
 
@@ -102,7 +102,7 @@ msgstr "Delete round"
 
 #: bot.py:244 bot.py:268 bot.py:424 bot.py:427 bot.py:451 bot.py:454 bot.py:567
 #: bot.py:570 bot.py:596 bot.py:599 bot.py:790 bot.py:794 bot.py:801 bot.py:806
-#: bot.py:866 bot.py:870 bot.py:877 bot.py:882
+#: bot.py:865 bot.py:869 bot.py:876 bot.py:881
 msgid "Пак {}"
 msgstr "Pack {}"
 
@@ -130,8 +130,8 @@ msgstr "Edit theme"
 msgid "Удалить тему"
 msgstr "Delete theme"
 
-#: bot.py:425 bot.py:452 bot.py:568 bot.py:597 bot.py:791 bot.py:795 bot.py:867
-#: bot.py:871
+#: bot.py:425 bot.py:452 bot.py:568 bot.py:597 bot.py:791 bot.py:795 bot.py:866
+#: bot.py:870
 msgid "Финальный раунд {}"
 msgstr "Final round {}"
 
@@ -147,7 +147,7 @@ msgstr "Enter theme name:"
 msgid "Создать вопрос"
 msgstr "Create question"
 
-#: bot.py:562 bot.py:591 bot.py:769 bot.py:779 bot.py:845 bot.py:855
+#: bot.py:562 bot.py:591 bot.py:769 bot.py:779 bot.py:844 bot.py:854
 msgid "Редактировать вопрос"
 msgstr "Edit question"
 
@@ -156,23 +156,25 @@ msgid "Удалить вопрос"
 msgstr "Delete question"
 
 #: bot.py:568 bot.py:571 bot.py:597 bot.py:600 bot.py:792 bot.py:796 bot.py:803
-#: bot.py:808 bot.py:868 bot.py:872 bot.py:879 bot.py:884
+#: bot.py:808 bot.py:867 bot.py:871 bot.py:878 bot.py:883
 msgid "Тема {}"
 msgstr "Theme {}"
 
-#: bot.py:571 bot.py:600 bot.py:802 bot.py:807 bot.py:878 bot.py:883
+#: bot.py:571 bot.py:600 bot.py:802 bot.py:807 bot.py:877 bot.py:882
 msgid "Раунд {}"
 msgstr "Round {}"
 
 #: bot.py:630 bot.py:653
 msgid "Вопрос в теме финального раунда уже существует, сначала удалите старый"
-msgstr "There is already a question in final round theme, delete it before creating new one"
+msgstr ""
+"There is already a question in final round theme, delete it before "
+"creating new one"
 
-#: bot.py:638 bot.py:661 bot.py:976 bot.py:985 bot.py:1149 bot.py:1157
+#: bot.py:638 bot.py:661 bot.py:974 bot.py:983 bot.py:1147 bot.py:1155
 msgid "Введите стоимость вопроса:"
 msgstr "Enter question price:"
 
-#: bot.py:674 bot.py:999 bot.py:1172
+#: bot.py:676 bot.py:998 bot.py:1170
 msgid "Введите число"
 msgstr "Enter a number"
 
@@ -180,71 +182,71 @@ msgstr "Enter a number"
 msgid "Финальный вопрос"
 msgstr "Final question"
 
-#: bot.py:768 bot.py:778 bot.py:844 bot.py:854
+#: bot.py:768 bot.py:778 bot.py:843 bot.py:853
 msgid "Редактировать ответ"
 msgstr "Edit answer"
 
-#: bot.py:770 bot.py:780 bot.py:846 bot.py:856
+#: bot.py:770 bot.py:780 bot.py:845 bot.py:855
 msgid "Посмотреть вопрос"
 msgstr "Show question"
 
-#: bot.py:771 bot.py:781 bot.py:847 bot.py:857
+#: bot.py:771 bot.py:781 bot.py:846 bot.py:856
 msgid "Редактировать пояснение"
 msgstr "Edit annotation"
 
-#: bot.py:772 bot.py:782 bot.py:848 bot.py:858
+#: bot.py:772 bot.py:782 bot.py:847 bot.py:857
 msgid "Удалить пояснение"
 msgstr "Delete annotation"
 
-#: bot.py:777 bot.py:853
+#: bot.py:777 bot.py:852
 msgid "Редактировать стоимость"
 msgstr "Edit price"
 
-#: bot.py:783 bot.py:859
+#: bot.py:783 bot.py:858
 msgid "Изменить тип вопроса"
 msgstr "Change question type"
 
-#: bot.py:792 bot.py:796 bot.py:868 bot.py:872
+#: bot.py:792 bot.py:796 bot.py:867 bot.py:871
 msgid "Редактирование вопроса"
 msgstr "Editing question"
 
-#: bot.py:797 bot.py:810 bot.py:873 bot.py:886
+#: bot.py:797 bot.py:810 bot.py:872 bot.py:885
 msgid "Ответ: {}"
 msgstr "Answer: {}"
 
-#: bot.py:804 bot.py:809 bot.py:880 bot.py:885
+#: bot.py:804 bot.py:809 bot.py:879 bot.py:884
 msgid "Редактирование вопроса {}"
 msgstr "Editing question {}"
 
-#: bot.py:812 bot.py:888
+#: bot.py:812 bot.py:887
 msgid "Пояснение: {}"
 msgstr "Annotation: {}"
 
-#: bot.py:817 bot.py:893
+#: bot.py:816 bot.py:891
 msgid "Тип вопроса: "
 msgstr "Question type: "
 
-#: bot.py:821 bot.py:897
+#: bot.py:820 bot.py:895
 msgid "Кот в мешке {}"
 msgstr "Bagcat {}"
 
-#: bot.py:822 bot.py:898
+#: bot.py:821 bot.py:896
 msgid "Настоящая тема: {}"
 msgstr "True theme: {}"
 
-#: bot.py:824 bot.py:900 bot.py:1116
+#: bot.py:823 bot.py:898 bot.py:1114
 msgid "Вопрос без риска"
 msgstr "Sponsored question"
 
-#: bot.py:948 bot.py:957
+#: bot.py:946 bot.py:955
 msgid "Введите пояснение к вопросу:"
 msgstr "Enter question annotation:"
 
-#: bot.py:1011
+#: bot.py:1009
 msgid "Введите новый ответ:"
 msgstr "Enter new answer:"
 
-#: bot.py:1031
+#: bot.py:1029
 msgid ""
 "Введите вопрос или отправьте файл\n"
 "Поддерживаются фото, видео, кружочки, аудио, голосовые"
@@ -252,19 +254,19 @@ msgstr ""
 "Enter question or send file\n"
 "Photo, video, video-notes, audio and voices can be downloaded"
 
-#: bot.py:1114
+#: bot.py:1112
 msgid "Обычный вопрос"
 msgstr "Usual question"
 
-#: bot.py:1115
+#: bot.py:1113
 msgid "Кот в мешке"
 msgstr "Bagcat"
 
-#: bot.py:1120
+#: bot.py:1118
 msgid "Выберите тип"
 msgstr "Choose type"
 
-#: bot.py:1169
+#: bot.py:1167
 msgid "Введите тему вопроса:"
 msgstr "Enter question theme:"
 
