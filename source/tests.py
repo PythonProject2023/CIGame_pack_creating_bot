@@ -95,3 +95,7 @@ class TestFileFunctions(unittest.TestCase):
     def tearDownClass(cls):
         """Delete sample user folder."""
         shutil.rmtree(os.path.join(xml_parser.packs_directory, '2222'))
+
+
+if __name__ == '__main__':
+    unittest.main()

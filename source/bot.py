@@ -627,8 +627,8 @@ def question_create_callback_handler(call: CallbackQuery):
         final_ = data["final"]
         exist_ = data["final_quest_exist"]
     if final_ and exist_:
-        bot.send_message(call.message.chat.id, _("Вопрос в теме финального раунда уже существует, сначала удалите старый",
-                                                 lang))
+        bot.send_message(call.message.chat.id,
+                         _("Вопрос в теме финального раунда уже существует, сначала удалите старый", lang))
         theme_edit_handler(call)
     elif final_:
         xml_parser.CreateNewQuestion(call.message.chat.id, call.from_user.id, 0)

@@ -1,6 +1,8 @@
 .idea
 packs/*
-*/__pycache__
+config.py
+__pycache__
 *.pot
 *.mo
-build/*
+*.db
+build
