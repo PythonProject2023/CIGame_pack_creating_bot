@@ -66,4 +66,7 @@ def task_runbot():
         'actions': [
             'python3 source/bot.py',
             ],
+        'task_dep': [
+            'l10n',
+            ],
         }
