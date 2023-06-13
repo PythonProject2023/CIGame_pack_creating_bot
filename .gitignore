@@ -1,6 +1,5 @@
 .idea
 packs/*
-config.py
 */__pycache__
 *.pot
 *.mo
