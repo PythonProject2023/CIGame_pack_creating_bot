@@ -22,8 +22,8 @@ Welcome to SIGame_pack_creating_bot's documentation!
    bot_token = "6136842632:AAE9Odc-4fKk73sGJF1H7dqpGuo3Syk"
 ..
 
-   - У вас должен быть установлен Redis-server версии >= 4.0 и быть включен на порту 6379
-   - Выполните команду doit runbot
+   - У вас должен быть установлен Redis-server версии >= 4.4 и быть включен на порту 6379
+   - Выполните команды doit l10n, doit runbot
    - Вы прекрасны
 
 .. toctree::
