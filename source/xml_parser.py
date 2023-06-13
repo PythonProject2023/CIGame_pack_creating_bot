@@ -6,8 +6,10 @@ import os
 import shutil
 import uuid
 
-packs_directory = '../packs/'
-sample_pack_directory = 'sample_pack'
+packs_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                               '../packs/')
+sample_pack_directory = os.path.join(os.path.dirname(
+    os.path.abspath(__file__)), 'sample_pack')
 
 
 def CreateRedisStorage():

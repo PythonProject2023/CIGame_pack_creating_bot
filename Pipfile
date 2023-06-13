@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+pyTelegramBotAPI = ">=4.10.0"
+redis = ">=4.4.0"
+
+[dev-packages]
+build = "*"
+doit = "*"
+pydocstyle = "*"
+flake8 = "*"
+Sphinx = "*"
+
+[requires]
+python_version = "3.10"
