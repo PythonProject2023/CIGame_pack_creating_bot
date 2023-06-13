@@ -17,7 +17,7 @@ release = '1.0'
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = ["sphinx.ext.autodoc"]
-sys.path.insert(0, os.path.abspath(".."))
+sys.path.insert(0, os.path.abspath("../../source"))
 
 templates_path = ['_templates']
 exclude_patterns = []

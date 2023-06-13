@@ -1,0 +1,34 @@
+[project]
+name = "SIGame_pack_creating_bot"
+version = "1.0"
+description = "Telegram bot for SIGame pack creating."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {file = "COPYRIGHT"}
+authors = [
+ {name = "Britenkov Yegor", email = "s02200338@gmail.com"},
+ {name = "Igor Zyanchurin", email = "ingv0rr@yandex.com"}
+]
+
+keywords = ["telegram-bot", "project", "example"]
+classifiers = [
+      "Development Status :: 4 - Beta",
+      "Programming Language :: Python :: 3",
+      "License :: OSI Approved :: MIT License",
+      "Operating System :: OS Independent",
+]
+
+dependencies = ["pyTelegramBotAPI", "redis"]
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["Sphinx", "build", "doit", "flake8", "pydocstyle", "setuptools"]
+
+[tools.setuptools]
+Packages = ["bot"]
+
+[tool.setuptools.package-dir]
+bot = "src"
+
+[tool.setuptools.package-data]
+bot = ["translation/en/*/*.mo"]
