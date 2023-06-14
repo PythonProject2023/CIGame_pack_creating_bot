@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  bot:
+    build: .
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis_server
+    env_file:
+      - token.env
+    volumes:
+      - ./packs:/source/packs
+
+  redis:
+    image: redis
+    container_name: redis_server
