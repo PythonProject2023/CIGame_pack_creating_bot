@@ -11,10 +11,15 @@ packs_directory = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 sample_pack_directory = os.path.join(os.path.dirname(
     os.path.abspath(__file__)), 'sample_pack')
 
+if 'REDIS_HOST' in os.environ.keys():
+    redis_host = os.environ['REDIS_HOST']
+else:
+    redis_host = 'localhost'
+
 
 def CreateRedisStorage():
     """Create a StateRedisStorage (there can be parameters)."""
-    return StateRedisStorage()
+    return StateRedisStorage(host=redis_host)
 
 
 def GetFileTree(user_id, pack_name):

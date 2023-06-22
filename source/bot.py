@@ -10,8 +10,17 @@ import config
 import os
 from l10n import _
 
+if 'SIGAMEBOT_TOKEN' in os.environ.keys():
+    token = os.environ['SIGAMEBOT_TOKEN']
+else:
+    token = config.bot_token
 
-bot = TeleBot(config.bot_token, state_storage=StateRedisStorage())
+if 'REDIS_HOST' in os.environ.keys():
+    redis_host = os.environ['REDIS_HOST']
+else:
+    redis_host = 'localhost'
+
+bot = TeleBot(token, state_storage=StateRedisStorage(host=redis_host))
 bot.add_custom_filter(StateFilter(bot))
 
 
